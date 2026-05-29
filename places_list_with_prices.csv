@@ -1,0 +1,100 @@
+id,name,category,regency,rating,totalRatings,priceLevel,Price
+199,Waterbom Bali,tourist_attraction,Kabupaten Badung,4.7,18191,,350000
+200,Kuta Beach,park,Kabupaten Badung,4.5,20922,,Free
+203,Masceti Temple,hindu_temple,Kabupaten Badung,4.2,778,,30000
+204,Wiracana HandFan Sesetan,museum,Kota Denpasar,4.7,200,,50000
+205,Bali Pet Nirvana,zoo,Kabupaten Badung,4.6,729,,350000
+206,Bali Exotic Marine Park,zoo,Kota Denpasar,4.5,1250,,350000
+207,Benoa Bay,natural_feature,Kabupaten Badung,4.4,228,,Free
+208,Bali Wake Park,amusement_park,Kota Denpasar,4.4,1959,,350000
+209,Taman Sari Wisata Bahari,amusement_park,Kabupaten Badung,4.3,573,,350000
+210,Garuda Wisnu Kencana Cultural Park,kecak,Kabupaten Badung,4.5,70899,,135000
+212,Sunset Kecak Fire Dance - Kuta,kecak,Kabupaten Badung,4.9,72,,150000
+215,Pura Dalem Agung Padangtegal,tourist_attraction,Kabupaten Gianyar,4.5,299,,30000
+217,Taman Nusa,tourist_attraction,Kabupaten Gianyar,4.3,1567,,50000
+218,Sacred Monkey Forest Sanctuary,park,Kabupaten Gianyar,4.5,58764,,100000
+219,Temple Yeh Pulu,hindu_temple,Kabupaten Gianyar,4.2,321,,30000
+221,Njana Tilem Museum,museum,Kabupaten Gianyar,4.6,199,,50000
+222,The Amazing Taman Safari Bali,zoo,Kabupaten Gianyar,4.5,24068,,500000
+223,Bali Zoo,zoo,Kabupaten Gianyar,4.5,27470,,350000
+224,Keramas Water Park,amusement_park,Kabupaten Gianyar,4.2,1342,,350000
+225,Real Bali Swing,amusement_park,Kabupaten Badung,4.6,14880,,350000
+226,Kecak & Fire Dance - Ubud Kaja at Pura Dalem Ubud,kecak,Kabupaten Gianyar,4.6,233,,150000
+227,Kecak & Fire Dance at Pura Puseh Ubud,kecak,Kabupaten Gianyar,4.5,187,,150000
+228,Ubud Kecak & Fire Dance Show by Bali Performance,kecak,Kabupaten Gianyar,4.4,148,,150000
+229,Balerung Stage,traditional dance,Kabupaten Gianyar,4.8,167,,150000
+230,"Kecak & Barong Dance at Tanah Gajah, Ubud",traditional dance,Kabupaten Gianyar,4.5,27,,150000
+231,Tegenungan Waterfall,waterfall,Kabupaten Gianyar,4.4,37515,,25000
+232,Suwat Waterfall,waterfall,Kabupaten Gianyar,4.6,1940,,25000
+233,Secret Waterfall,waterfall,Kabupaten Gianyar,3.6,231,,25000
+234,Museum Buleleng (á¬«á¬¸á¬²á¬¶á¬¬á¬¸á¬«á­ á¬©á¬¸á¬®á¬¾á¬®á¬¾á¬á­ ),tourist_attraction,Kabupaten Buleleng,4.4,157,,50000
+235,Taman Kota Singaraja,tourist_attraction,Kabupaten Buleleng,4.5,5886,,Free
+236,Alam Sambangan - The Secret Valley Club,park,Kabupaten Buleleng,4.2,1080,2.0,Free
+237,Air Terjun Colek Pamor,park,Kabupaten Buleleng,4.5,237,,Free
+238,Beji Sangsit Temple,hindu_temple,Kabupaten Buleleng,4.6,746,,30000
+239,Gedong Kirtya,museum,Kabupaten Buleleng,4.5,118,,50000
+240,National Park of Buleleng,amusement_park,Kabupaten Buleleng,4.5,249,,350000
+241,Taman Bung Karno,amusement_park,Kabupaten Buleleng,4.6,1179,,Free
+242,Gitgit Waterfall,waterfall,Kabupaten Buleleng,4.3,3870,,25000
+243,Sekumpul Waterfall,waterfall,Kabupaten Buleleng,4.3,2321,,25000
+244,Singsing Waterfall,waterfall,Kabupaten Buleleng,3.6,205,,25000
+245,KECAK GUEST HOUSE,kecak,Kabupaten Buleleng,4.9,132,,150000
+246,Toko Kecak (Kecak Shop),kecak,Kabupaten Buleleng,4.3,8,,150000
+248,"Palm Reading, Healing Energy. Massage.",traditional dance,Kabupaten Buleleng,5.0,12,,150000
+249,Balinese dance group lovina,traditional dance,Kabupaten Buleleng,5.0,133,,150000
+250,Jimmy Hendrix Dance Group,traditional dance,Kabupaten Buleleng,4.2,38,,150000
+252,Bali Bird Park,park,Kabupaten Gianyar,4.6,14035,,385000
+253,Taman Janggan Renon Denpasar,park,Kota Denpasar,4.6,1763,,Free
+254,Puri Agung Denpasar,hindu_temple,Kota Denpasar,4.7,147,,Free
+255,Agrowisata Tupai Emas,zoo,Kota Denpasar,4.7,101,,350000
+256,Serangan Island,natural_feature,Kota Denpasar,4.4,275,,Free
+257,Blangsinga Waterfall,waterfall,Kabupaten Gianyar,4.6,739,,25000
+258,Grubugan Waterfall Sading,waterfall,Kabupaten Badung,4.1,31,,25000
+259,Kecak Dance Batubulan,kecak,Kabupaten Gianyar,4.5,340,,150000
+260,Barong & Kris Dance Jambe Budaya,traditional dance,Kabupaten Gianyar,4.2,839,,150000
+261,Balai Banjar Pemamoran,traditional dance,Kabupaten Badung,4.9,32,,150000
+262,Barong And Kris Dance,traditional dance,Kabupaten Gianyar,4.3,499,,150000
+263,Monumen Bajra Sandhi,tourist_attraction,Kota Denpasar,4.6,16,,25000
+264,Taman Werdhi Budaya Art Centre,museum,Kota Denpasar,4.6,10,,50000
+265,Pasar Badung,tourist_attraction,Kota Denpasar,4.5,18,,Free
+266,Museum Bali,museum,Kota Denpasar,4.3,3,,30000
+267,Agung Jagatnatha Temple,hindu_temple,Kota Denpasar,4.7,1,,30000
+268,Pantai Sanur,natural_feature,Kota Denpasar,4.5,6,,Free
+269,Lapangan Puputan Badung,park,Kota Denpasar,4.7,4,,Free
+270,Taman Kota Sewaka Dharma,park,Kota Denpasar,4.5,11,,Free
+271,Blue Ocean Dive Center Menjangan,water-sports,Kabupaten Buleleng,5.0,111,,175000
+272,Karang Divers,water-sports,Kabupaten Buleleng,4.8,151,,175000
+273,Blue Lagoon Snorkeling,water-sports,Kabupaten Badung,4.5,311,,175000
+274,Bali Snorkeling Tour,water-sports,Kabupaten Badung,4.3,10,,175000
+275,One Day Nusa Penida Tour - Snorkeling,water-sports,Kabupaten Badung,5.0,426,,175000
+276,DUNE BALI ATLANTIS Diving - International,water-sports,Kota Denpasar,4.9,945,,175000
+277,Golden Horizon - Snorkeling Bali,water-sports,Kabupaten Badung,4.9,151,,175000
+278,BALI SNORKELING,water-sports,Kota Denpasar,4.8,142,,175000
+279,Nuanu Museum,museum,Kabupaten Tabanan,4.5,50,,50000
+280,Aksari Resort & Spa Ubud by iNi Vie Hospitality,tourist_attraction,Kabupaten Gianyar,4.8,2431,,50000
+281,Pura Tirta Empul,tourist_attraction,Kabupaten Gianyar,4.6,29724,,50000
+282,"Pemulan Bali Farm Cooking School, Ubud",tourist_attraction,Kabupaten Gianyar,5.0,3210,,50000
+283,Wana Ayu Jelijah,park,Kabupaten Gianyar,4.9,174,,Free
+284,The Sukarno Center,museum,Kabupaten Gianyar,4.6,452,,50000
+285,Mason Elephant Park & Lodge,zoo,Kabupaten Gianyar,4.0,5014,,350000
+286,U Fun Field- Swing zipline & more,amusement_park,Kabupaten Gianyar,4.7,1274,,350000
+287,Nungnung Waterfall,waterfall,Kabupaten Badung,4.8,950,,25000
+288,Manuaba Waterfall,waterfall,Kabupaten Gianyar,4.8,1683,,25000
+290,Maniq Restaurant | 12+,traditional dance,Kabupaten Gianyar,4.7,82,,150000
+291,Vanara Restaurant,traditional dance,Kabupaten Gianyar,4.9,59,,150000
+293,Great Mosque Tabanan,tourist_attraction,Kabupaten Tabanan,4.8,796,,50000
+294,Belimbing Rice Terraces,tourist_attraction,Kabupaten Tabanan,4.7,684,,50000
+295,Alas Kedaton,park,Kabupaten Tabanan,4.2,2662,,30000
+296,Tanah Lot,tourist_attraction,Kabupaten Tabanan,4.6,102433,,60000
+297,Taman Ayun Temple,tourist_attraction,Kabupaten Badung,4.6,9828,,50000
+298,Tabanan Anom Palace,museum,Kabupaten Tabanan,4.8,907,,50000
+299,Subak Museum,museum,Kabupaten Tabanan,4.2,371,,50000
+300,Objek Wisata Sangeh,zoo,Kabupaten Badung,4.6,166,,350000
+302,Umadhatu Resort,amusement_park,Kabupaten Tabanan,4.3,846,,350000
+303,Alam Tirta Outbound,amusement_park,Kabupaten Badung,4.4,578,,350000
+304,"LUMBUNGASRI | Puri Lumbung Waterpark, restaurant & cottage Managed by GHAYATRI Management",amusement_park,Kabupaten Badung,3.9,334,1.0,350000
+305,Leke Leke Waterfall,waterfall,Kabupaten Tabanan,4.5,3522,,25000
+306,Pengempu Waterfall,waterfall,Kabupaten Tabanan,4.2,820,,25000
+307,Kecak Dance Tanah Lot,kecak,Kabupaten Tabanan,4.6,83,,150000
+308,Kecak Pura Puseh Batubulan,kecak,Kabupaten Gianyar,4.8,41,,150000
+309,Taman Anyar - Traditional Balinese House,traditional dance,Kabupaten Badung,4.8,174,,150000

@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { CrawlerModule } from './crawler/crawler.module';
 import { SwipeModule } from './swipe/swipe.module';
 import { Place } from './entities/place.entity';
+import { Tag } from './entities/tag.entity';
 
 @Module({
   imports: [
@@ -18,7 +19,7 @@ import { Place } from './entities/place.entity';
       username: process.env.DATABASE_USER,
       password: process.env.DATABASE_PASSWORD,
       database: process.env.DATABASE_NAME,
-      entities: [Place],
+      entities: [Place, Tag],
       synchronize: true,
       logging: true,
     }),

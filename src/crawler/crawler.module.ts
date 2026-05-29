@@ -3,9 +3,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { CrawlerService } from './crawler.service';
 import { CrawlerController } from './crawler.controller';
 import { Place } from '../entities/place.entity';
+import { Tag } from '../entities/tag.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Place])],
+  imports: [TypeOrmModule.forFeature([Place, Tag])],
   providers: [CrawlerService],
   controllers: [CrawlerController],
   exports: [CrawlerService],

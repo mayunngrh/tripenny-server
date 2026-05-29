@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToMany, JoinTable } from 'typeorm';
+import { Tag } from './tag.entity';
 
 @Entity('places')
 export class Place {
@@ -22,6 +23,9 @@ export class Place {
 
   @Column({ nullable: true })
   priceLevel!: number;
+
+  @Column({ nullable: true })
+  price!: number;
 
   @Column({ nullable: true })
   isOpenNow!: boolean;
@@ -49,6 +53,10 @@ export class Place {
 
   @Column({ nullable: true })
   province!: string;
+
+  @ManyToMany(() => Tag, (tag) => tag.places)
+  @JoinTable()
+  tags!: Tag[];
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt!: Date;

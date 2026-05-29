@@ -3,22 +3,54 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import axios from 'axios';
 import { Place } from '../entities/place.entity';
+import { Tag } from '../entities/tag.entity';
 
 @Injectable()
 export class CrawlerService {
+  private tagMap: Record<string, string[]> = {
+    tourist_attraction: ['sightseeing', 'outdoor'],
+    zoo: ['wildlife', 'family-friendly'],
+    park: ['outdoor', 'nature', 'family-friendly'],
+    museum: ['culture', 'education', 'indoor'],
+    hindu_temple: ['culture', 'sightseeing'],
+    natural_feature: ['nature', 'outdoor', 'beachfront'],
+    amusement_park: ['entertainment', 'family-friendly'],
+    art_gallery: ['culture', 'art'],
+    restaurant: ['dining', 'casual'],
+    hotel: ['accommodation', 'lodging'],
+    cafe: ['dining', 'casual', 'coffee'],
+  };
+
   constructor(
     @InjectRepository(Place)
     private placeRepository: Repository<Place>,
+    @InjectRepository(Tag)
+    private tagRepository: Repository<Tag>,
   ) {}
+
+  private async createOrGetTags(tagNames: string[]): Promise<Tag[]> {
+    const tags: Tag[] = [];
+    for (const name of tagNames) {
+      let tag = await this.tagRepository.findOne({ where: { name } });
+      if (!tag) {
+        tag = await this.tagRepository.save({ name });
+      }
+      tags.push(tag);
+    }
+    return tags;
+  }
 
   async crawl(
     latitude: number,
     longitude: number,
-    category: string = 'restaurant',
+    category?: string,
+    keyword?: string,
     radius: number = 10000,
+    limit?: number,
   ) {
     try {
-      console.log(`\nCrawling ${category}s near ${latitude}, ${longitude}...`);
+      const searchType = category ? `${category}s` : `"${keyword}"`;
+      console.log(`\nCrawling ${searchType} near ${latitude}, ${longitude}...`);
 
       let allResults: any[] = [];
       let nextPageToken = null;
@@ -27,9 +59,14 @@ export class CrawlerService {
         const params: any = {
           location: `${latitude},${longitude}`,
           radius: radius,
-          type: category,
           key: process.env.GOOGLE_MAPS_API_KEY,
         };
+
+        if (category) {
+          params.type = category;
+        } else if (keyword) {
+          params.keyword = keyword;
+        }
 
         if (nextPageToken) {
           params.pagetoken = nextPageToken;
@@ -52,18 +89,35 @@ export class CrawlerService {
 
         console.log(`Page fetched: ${response.data.results.length} results`);
 
-        if (nextPageToken) {
+        if (limit && allResults.length >= limit) {
+          nextPageToken = null;
+        } else if (nextPageToken) {
           console.log('Waiting for next page...');
           await new Promise((resolve) => setTimeout(resolve, 2000));
         }
       } while (nextPageToken);
 
+      if (limit && allResults.length > limit) {
+        allResults = allResults.slice(0, limit);
+      }
+
       console.log(`\nTotal fetched: ${allResults.length} places`);
 
       let savedCount = 0;
       let skippedCount = 0;
+      let filteredCount = 0;
 
       for (const place of allResults) {
+        const rating = place.rating || 0;
+        const totalRatings = place.user_ratings_total || 0;
+
+        const minReviews = keyword ? 0 : 100;
+        if (totalRatings < minReviews || rating < 3.0) {
+          console.log(`Filtered: ${place.name} (rating: ${rating}, reviews: ${totalRatings})`);
+          filteredCount++;
+          continue;
+        }
+
         const exists = await this.placeRepository.findOne({
           where: { placeId: place.place_id },
         });
@@ -71,11 +125,13 @@ export class CrawlerService {
         if (!exists) {
           const photoReference = place.photos?.[0]?.photo_reference ?? undefined;
           const details = await this.fetchPlaceDetails(place.place_id);
+          const categoryForTags = category || 'attraction';
+          const tags = await this.createOrGetTags(this.tagMap[categoryForTags] || ['culture', 'event']);
 
           const newPlace = this.placeRepository.create({
             name: place.name,
             address: place.vicinity,
-            category: category,
+            category: category || keyword,
             rating: place.rating || null,
             totalRatings: place.user_ratings_total || 0,
             priceLevel: place.price_level ?? null,
@@ -88,6 +144,7 @@ export class CrawlerService {
             district: details.district,
             regency: details.regency,
             province: details.province,
+            tags,
           });
 
           await this.placeRepository.save(newPlace);
@@ -99,17 +156,24 @@ export class CrawlerService {
         }
       }
 
+      const filterDesc = keyword
+        ? 'rating >= 3.0'
+        : 'rating >= 3.0 AND totalRatings >= 100';
+
       return {
         success: true,
-        category,
+        category: category || keyword,
         location: { latitude, longitude, radius },
         total: allResults.length,
         saved: savedCount,
         skipped: skippedCount,
+        filtered: filteredCount,
+        quality_filter: filterDesc,
       };
     } catch (error) {
-      console.error('Error:', error.message);
-      return { success: false, error: error.message };
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error('Error:', errorMessage);
+      return { success: false, error: errorMessage };
     }
   }
 
@@ -118,6 +182,7 @@ export class CrawlerService {
     district?: string;
     regency?: string;
     province?: string;
+    photoReference?: string;
   }> {
     try {
       const response = await axios.get(
@@ -125,7 +190,7 @@ export class CrawlerService {
         {
           params: {
             place_id: placeId,
-            fields: 'editorial_summary,address_components',
+            fields: 'editorial_summary,address_components,photos',
             key: process.env.GOOGLE_MAPS_API_KEY,
           },
         },
@@ -137,11 +202,21 @@ export class CrawlerService {
       const get = (type: string) =>
         components.find((c) => c.types.includes(type))?.long_name;
 
+      let regency = get('administrative_area_level_2');
+      const province = get('administrative_area_level_1');
+
+      if (regency === province) {
+        regency = undefined;
+      }
+
+      const photoReference = result?.photos?.[0]?.photo_reference ?? undefined;
+
       return {
         description: result?.editorial_summary?.overview,
         district: get('sublocality') ?? get('sublocality_level_1'),
-        regency: get('administrative_area_level_2'),
-        province: get('administrative_area_level_1'),
+        regency,
+        province,
+        photoReference,
       };
     } catch {
       return {};
@@ -212,9 +287,18 @@ export class CrawlerService {
   }
 
   async getAllPlaces() {
-    return await this.placeRepository.find({
+    const places = await this.placeRepository.find({
       order: { rating: 'DESC' },
     });
+
+    const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+
+    return places.map((p) => ({
+      ...p,
+      photoUrl: p.photoReference
+        ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=${p.photoReference}&key=${apiKey}`
+        : null,
+    }));
   }
 
   async getPlacesByCategory(category: string) {
@@ -238,5 +322,61 @@ export class CrawlerService {
       where: { priceLevel },
       order: { rating: 'DESC' },
     });
+  }
+
+  async getPlacesByTag(tagName: string) {
+    return await this.placeRepository
+      .createQueryBuilder('place')
+      .leftJoinAndSelect('place.tags', 'tag')
+      .where('tag.name = :tagName', { tagName })
+      .orderBy('place.rating', 'DESC')
+      .getMany();
+  }
+
+  async getAllTags() {
+    return await this.tagRepository.find({
+      order: { name: 'ASC' },
+    });
+  }
+
+  async updateAllPhotoReferences() {
+    try {
+      const places = await this.placeRepository.find();
+      console.log(`\nUpdating photoReferences for ${places.length} places...`);
+
+      let updatedCount = 0;
+      let skippedCount = 0;
+
+      for (const place of places) {
+        try {
+          const details = await this.fetchPlaceDetails(place.placeId);
+          if (details.photoReference) {
+            place.photoReference = details.photoReference;
+            await this.placeRepository.save(place);
+            updatedCount++;
+            console.log(`✓ Updated: ${place.name}`);
+          } else {
+            skippedCount++;
+            console.log(`⊘ No photo: ${place.name}`);
+          }
+        } catch (error) {
+          skippedCount++;
+          console.log(`✗ Error updating ${place.name}: ${error.message}`);
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
+
+      return {
+        success: true,
+        total: places.length,
+        updated: updatedCount,
+        skipped: skippedCount,
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error('Error:', errorMessage);
+      return { success: false, error: errorMessage };
+    }
   }
 }
