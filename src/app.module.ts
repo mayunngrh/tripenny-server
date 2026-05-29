@@ -22,9 +22,10 @@ import { Tag } from './entities/tag.entity';
       entities: [Place, Tag],
       synchronize: true,
       logging: true,
+      ssl: { rejectUnauthorized: false },
     }),
     CrawlerModule,
     SwipeModule,
   ],
 })
-export class AppModule {}
+export class AppModule { }
