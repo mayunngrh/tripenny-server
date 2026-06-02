@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import axios from 'axios';
 import { Place } from '../entities/place.entity';
 import { Tag } from '../entities/tag.entity';
+import { Regency } from '../entities/regency.entity';
 
 @Injectable()
 export class CrawlerService {
@@ -26,6 +27,8 @@ export class CrawlerService {
     private placeRepository: Repository<Place>,
     @InjectRepository(Tag)
     private tagRepository: Repository<Tag>,
+    @InjectRepository(Regency)
+    private regencyRepository: Repository<Regency>,
   ) {}
 
   private async createOrGetTags(tagNames: string[]): Promise<Tag[]> {
@@ -38,6 +41,15 @@ export class CrawlerService {
       tags.push(tag);
     }
     return tags;
+  }
+
+  private async createOrGetRegency(regencyName?: string): Promise<Regency | null> {
+    if (!regencyName) return null;
+    let regency = await this.regencyRepository.findOne({ where: { name: regencyName } });
+    if (!regency) {
+      regency = await this.regencyRepository.save({ name: regencyName });
+    }
+    return regency;
   }
 
   async crawl(
@@ -127,6 +139,7 @@ export class CrawlerService {
           const details = await this.fetchPlaceDetails(place.place_id);
           const categoryForTags = category || 'attraction';
           const tags = await this.createOrGetTags(this.tagMap[categoryForTags] || ['culture', 'event']);
+          const regency = await this.createOrGetRegency(details.regency);
 
           const newPlace = this.placeRepository.create({
             name: place.name,
@@ -142,7 +155,7 @@ export class CrawlerService {
             photoReference,
             description: details.description,
             district: details.district,
-            regency: details.regency,
+            regency,
             province: details.province,
             tags,
           });
@@ -331,12 +344,6 @@ export class CrawlerService {
       .where('tag.name = :tagName', { tagName })
       .orderBy('place.rating', 'DESC')
       .getMany();
-  }
-
-  async getAllTags() {
-    return await this.tagRepository.find({
-      order: { name: 'ASC' },
-    });
   }
 
   async updateAllPhotoReferences() {

@@ -1,8 +1,7 @@
 import { Controller, Post, Get, Query } from '@nestjs/common';
-import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { CrawlerService } from './crawler.service';
 
-@ApiTags('crawler')
 @Controller('crawler')
 export class CrawlerController {
   constructor(private crawlerService: CrawlerService) {}
@@ -87,13 +86,6 @@ export class CrawlerController {
   async getByTag(@Query('tag') tag: string) {
     if (!tag) return { error: 'tag parameter is required' };
     return await this.crawlerService.getPlacesByTag(tag);
-  }
-
-  // GET /crawler/tags/list
-  @Get('tags/list')
-  @ApiOperation({ summary: 'List all available tags' })
-  async getAllTags() {
-    return await this.crawlerService.getAllTags();
   }
 
   // POST /crawler/update-photos

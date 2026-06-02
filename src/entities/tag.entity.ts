@@ -9,6 +9,9 @@ export class Tag {
   @Column({ unique: true })
   name!: string;
 
+  @Column({ nullable: true })
+  iconName!: string;
+
   @ManyToMany(() => Place, (place) => place.tags)
   places!: Place[];
 }

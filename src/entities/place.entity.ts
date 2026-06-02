@@ -1,5 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToMany, JoinTable } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToMany, JoinTable, ManyToOne } from 'typeorm';
 import { Tag } from './tag.entity';
+import { Regency } from './regency.entity';
 
 @Entity('places')
 export class Place {
@@ -48,8 +49,8 @@ export class Place {
   @Column({ nullable: true })
   district!: string;
 
-  @Column({ nullable: true })
-  regency!: string;
+  @ManyToOne(() => Regency, (regency) => regency.places, { nullable: true })
+  regency!: Regency | null;
 
   @Column({ nullable: true })
   province!: string;
