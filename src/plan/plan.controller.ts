@@ -83,6 +83,100 @@ Returns: Created plan object with empty items array`,
     );
   }
 
+  @Get('active')
+  @ApiOperation({
+    summary: 'Get active plans (not yet passed)',
+    description: `Retrieve only trip plans that have not yet ended (endDate >= today).
+
+Perfect for:
+- "My Plans" section in the app
+- Upcoming trips only
+- Active itineraries to work on
+
+Returns: Array of plan objects with endDate >= today, sorted by start date (soonest first).
+Each plan includes all items and places.`,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'List of active plans (not yet passed)',
+    schema: {
+      example: [
+        {
+          id: 1,
+          name: 'Ubud Exploration',
+          startDate: '2026-11-14',
+          endDate: '2026-11-16',
+          estimatedCost: 466250,
+          items: [
+            {
+              id: 1,
+              dayIndex: 1,
+              visitTime: '09:00:00',
+              notes: 'Morning visit',
+              place: {
+                id: 281,
+                name: 'Pura Tirta Empul',
+                rating: 4.6,
+                price: 50000,
+              },
+            },
+          ],
+          createdAt: '2026-06-03T10:00:00Z',
+        },
+      ],
+    },
+  })
+  async getActivePlans() {
+    return await this.planService.getActivePlans();
+  }
+
+  @Get('history')
+  @ApiOperation({
+    summary: 'Get plan history (all passed trips)',
+    description: `Retrieve all trip plans that have already ended (endDate < today).
+
+Perfect for:
+- Trip history / memories
+- Past experiences tracking
+- Archive of completed trips
+
+Returns: Array of plan objects with endDate < today, sorted by end date (most recent first).
+Each plan includes all items and places.`,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'List of past plans (already passed)',
+    schema: {
+      example: [
+        {
+          id: 2,
+          name: 'Seminyak Beach Holiday',
+          startDate: '2026-05-10',
+          endDate: '2026-05-12',
+          estimatedCost: 550000,
+          items: [
+            {
+              id: 5,
+              dayIndex: 1,
+              visitTime: '14:00:00',
+              notes: 'Check-in and beach time',
+              place: {
+                id: 200,
+                name: 'Kuta Beach',
+                rating: 4.5,
+                price: null,
+              },
+            },
+          ],
+          createdAt: '2026-05-05T08:30:00Z',
+        },
+      ],
+    },
+  })
+  async getPlanHistory() {
+    return await this.planService.getPlanHistory();
+  }
+
   @Get()
   @ApiOperation({
     summary: 'Get all my plans',

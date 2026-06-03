@@ -97,4 +97,32 @@ export class PlanService {
     const result = await this.planItemRepository.delete(itemId);
     return result.affected ? result.affected > 0 : false;
   }
+
+  async getActivePlans(): Promise<Plan[]> {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return await this.planRepository
+      .createQueryBuilder('plan')
+      .leftJoinAndSelect('plan.items', 'items')
+      .leftJoinAndSelect('items.place', 'place')
+      .where('plan.endDate >= :today', { today })
+      .orderBy('plan.startDate', 'ASC')
+      .addOrderBy('plan.createdAt', 'DESC')
+      .getMany();
+  }
+
+  async getPlanHistory(): Promise<Plan[]> {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return await this.planRepository
+      .createQueryBuilder('plan')
+      .leftJoinAndSelect('plan.items', 'items')
+      .leftJoinAndSelect('items.place', 'place')
+      .where('plan.endDate < :today', { today })
+      .orderBy('plan.endDate', 'DESC')
+      .addOrderBy('plan.createdAt', 'DESC')
+      .getMany();
+  }
 }
