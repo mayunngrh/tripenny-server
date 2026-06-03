@@ -88,6 +88,23 @@ export class CrawlerController {
     return await this.crawlerService.getPlacesByTag(tag);
   }
 
+  // POST /crawler/bulk-crawl
+  @Post('bulk-crawl')
+  @ApiOperation({
+    summary: 'Seed tags + crawl all new categories (art, history, landmark, surfing, trekking, snorkeling, etc.) in one call',
+    description: 'Runs seed-tags first, then crawls ~15 keyword/category jobs across Bali to add 20+ new places. Takes 1-3 minutes.',
+  })
+  async bulkCrawl() {
+    return await this.crawlerService.bulkCrawl();
+  }
+
+  // POST /crawler/seed-tags
+  @Post('seed-tags')
+  @ApiOperation({ summary: 'Seed new tags (art, history, landmark, surfing, trekking, etc.) into the database' })
+  async seedTags() {
+    return await this.crawlerService.seedTags();
+  }
+
   // POST /crawler/update-photos
   @Post('update-photos')
   @ApiOperation({ summary: 'Refresh photoReference for all places from Google' })

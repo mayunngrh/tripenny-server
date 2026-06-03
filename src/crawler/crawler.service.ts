@@ -10,16 +10,30 @@ import { Regency } from '../entities/regency.entity';
 export class CrawlerService {
   private tagMap: Record<string, string[]> = {
     tourist_attraction: ['sightseeing', 'outdoor'],
-    zoo: ['wildlife', 'family-friendly'],
+    zoo: ['wildlife', 'family-friendly', 'zoo'],
+    aquarium: ['aquarium', 'family-friendly', 'wildlife'],
     park: ['outdoor', 'nature', 'family-friendly'],
-    museum: ['culture', 'education', 'indoor'],
-    hindu_temple: ['culture', 'sightseeing'],
+    museum: ['culture', 'education', 'history'],
+    hindu_temple: ['culture', 'sightseeing', 'landmark'],
     natural_feature: ['nature', 'outdoor', 'beachfront'],
-    amusement_park: ['entertainment', 'family-friendly'],
-    art_gallery: ['culture', 'art'],
-    restaurant: ['dining', 'casual'],
-    hotel: ['accommodation', 'lodging'],
-    cafe: ['dining', 'casual', 'coffee'],
+    amusement_park: ['amusement-park', 'entertainment', 'family-friendly'],
+    water_park: ['water-park', 'entertainment', 'family-friendly'],
+    art_gallery: ['art', 'culture'],
+    restaurant: ['dining'],
+    hotel: ['accommodation'],
+    cafe: ['dining'],
+    // keyword-based crawls
+    trekking: ['trekking', 'outdoor', 'nature'],
+    surfing: ['surfing', 'outdoor'],
+    snorkeling: ['snorkeling', 'outdoor'],
+    'scuba diving': ['scuba-diving', 'outdoor'],
+    'river rafting': ['river-rafting', 'outdoor', 'trekking'],
+    tubing: ['tubing', 'outdoor'],
+    'jet ski': ['jet-skiing', 'outdoor'],
+    'traditional dance': ['traditional-performance', 'culture'],
+    'rice terrace': ['agriculture', 'nature', 'sightseeing'],
+    landmark: ['landmark', 'sightseeing', 'culture'],
+    'history museum': ['history', 'culture', 'education'],
   };
 
   constructor(
@@ -137,9 +151,17 @@ export class CrawlerService {
         if (!exists) {
           const photoReference = place.photos?.[0]?.photo_reference ?? undefined;
           const details = await this.fetchPlaceDetails(place.place_id);
-          const categoryForTags = category || 'attraction';
-          const tags = await this.createOrGetTags(this.tagMap[categoryForTags] || ['culture', 'event']);
+
+          const tagKey = (category ?? keyword ?? '').toLowerCase().replace(/\s+bali$/, '').trim();
+          const tagNames =
+            this.tagMap[tagKey] ??
+            Object.entries(this.tagMap).find(([k]) => tagKey.includes(k))?.[1] ??
+            ['sightseeing'];
+          const tags = await this.createOrGetTags(tagNames);
           const regency = await this.createOrGetRegency(details.regency);
+
+          const resolvedPriceLevel = place.price_level ?? details.priceLevel ?? undefined;
+          const estimatedPrice = this.estimatePriceFromLevel(resolvedPriceLevel) ?? undefined;
 
           const newPlace = this.placeRepository.create({
             name: place.name,
@@ -147,12 +169,13 @@ export class CrawlerService {
             category: category || keyword,
             rating: place.rating || null,
             totalRatings: place.user_ratings_total || 0,
-            priceLevel: place.price_level ?? null,
+            priceLevel: resolvedPriceLevel,
+            price: estimatedPrice,
             isOpenNow: place.opening_hours?.open_now ?? null,
             latitude: place.geometry.location.lat,
             longitude: place.geometry.location.lng,
             placeId: place.place_id,
-            photoReference,
+            photoReference: details.photoReference ?? photoReference,
             description: details.description,
             district: details.district,
             regency,
@@ -190,12 +213,24 @@ export class CrawlerService {
     }
   }
 
+  private estimatePriceFromLevel(priceLevel: number | undefined): number | undefined {
+    const map: Record<number, number> = {
+      0: 0,
+      1: 50000,
+      2: 150000,
+      3: 350000,
+      4: 600000,
+    };
+    return priceLevel != null ? (map[priceLevel] ?? undefined) : undefined;
+  }
+
   private async fetchPlaceDetails(placeId: string): Promise<{
     description?: string;
     district?: string;
     regency?: string;
     province?: string;
     photoReference?: string;
+    priceLevel?: number;
   }> {
     try {
       const response = await axios.get(
@@ -203,7 +238,7 @@ export class CrawlerService {
         {
           params: {
             place_id: placeId,
-            fields: 'editorial_summary,address_components,photos',
+            fields: 'editorial_summary,address_components,photos,price_level',
             key: process.env.GOOGLE_MAPS_API_KEY,
           },
         },
@@ -230,6 +265,7 @@ export class CrawlerService {
         regency,
         province,
         photoReference,
+        priceLevel: result?.price_level ?? undefined,
       };
     } catch {
       return {};
@@ -344,6 +380,83 @@ export class CrawlerService {
       .where('tag.name = :tagName', { tagName })
       .orderBy('place.rating', 'DESC')
       .getMany();
+  }
+
+  async bulkCrawl() {
+    const BALI_CENTER = { lat: -8.4095, lng: 115.1889 };
+    const SOUTH_BALI = { lat: -8.7211, lng: 115.1691 };
+    const EAST_BALI = { lat: -8.5069, lng: 115.2625 };
+
+    const jobs: { lat: number; lng: number; category?: string; keyword?: string; radius: number; limit: number }[] = [
+      { ...BALI_CENTER, category: 'art_gallery',       radius: 50000, limit: 5 },
+      { ...BALI_CENTER, category: 'aquarium',           radius: 50000, limit: 3 },
+      { ...BALI_CENTER, category: 'amusement_park',    radius: 50000, limit: 3 },
+      { ...BALI_CENTER, category: 'water_park',         radius: 50000, limit: 3 },
+      { ...BALI_CENTER, keyword: 'history museum bali', radius: 50000, limit: 5 },
+      { ...BALI_CENTER, keyword: 'landmark bali',       radius: 50000, limit: 5 },
+      { ...BALI_CENTER, keyword: 'traditional dance bali', radius: 50000, limit: 5 },
+      { ...BALI_CENTER, keyword: 'rice terrace bali',   radius: 50000, limit: 5 },
+      { ...BALI_CENTER, keyword: 'trekking bali',       radius: 50000, limit: 5 },
+      { ...BALI_CENTER, keyword: 'river rafting bali',  radius: 50000, limit: 5 },
+      { ...SOUTH_BALI,  keyword: 'surfing bali',        radius: 20000, limit: 5 },
+      { ...SOUTH_BALI,  keyword: 'jet ski bali',        radius: 20000, limit: 3 },
+      { ...EAST_BALI,   keyword: 'snorkeling bali',     radius: 30000, limit: 5 },
+      { ...EAST_BALI,   keyword: 'scuba diving bali',   radius: 30000, limit: 5 },
+      { ...EAST_BALI,   keyword: 'tubing bali',         radius: 50000, limit: 3 },
+    ];
+
+    await this.seedTags();
+
+    const summary: any[] = [];
+    for (const job of jobs) {
+      const result = await this.crawl(job.lat, job.lng, job.category, job.keyword, job.radius, job.limit);
+      summary.push({ job: job.category ?? job.keyword, ...result });
+      await new Promise((r) => setTimeout(r, 1000));
+    }
+
+    const totalSaved = summary.reduce((acc, r) => acc + (r.saved ?? 0), 0);
+    const totalSkipped = summary.reduce((acc, r) => acc + (r.skipped ?? 0), 0);
+
+    return { success: true, totalSaved, totalSkipped, details: summary };
+  }
+
+  async seedTags() {
+    const tagsToSeed = [
+      { name: 'art', iconName: 'photo.artframe' },
+      { name: 'history', iconName: 'clock.arrow.circlepath' },
+      { name: 'landmark', iconName: 'building.columns' },
+      { name: 'zoo', iconName: 'hare' },
+      { name: 'aquarium', iconName: 'fish' },
+      { name: 'water-park', iconName: 'figure.pool.swim' },
+      { name: 'amusement-park', iconName: 'ferriswheel' },
+      { name: 'trekking', iconName: 'figure.hiking' },
+      { name: 'traditional-performance', iconName: 'theatermasks' },
+      { name: 'agriculture', iconName: 'leaf.circle' },
+      { name: 'surfing', iconName: 'figure.surfing' },
+      { name: 'jet-skiing', iconName: 'water.waves' },
+      { name: 'snorkeling', iconName: 'figure.open.water.swim' },
+      { name: 'scuba-diving', iconName: 'lungs' },
+      { name: 'river-rafting', iconName: 'arrowshape.bounce.forward' },
+      { name: 'tubing', iconName: 'circle.circle' },
+    ];
+
+    const results: { name: string; status: 'created' | 'exists' }[] = [];
+
+    for (const t of tagsToSeed) {
+      let tag = await this.tagRepository.findOne({ where: { name: t.name } });
+      if (!tag) {
+        await this.tagRepository.save(t);
+        results.push({ name: t.name, status: 'created' });
+      } else {
+        if (!tag.iconName) {
+          tag.iconName = t.iconName;
+          await this.tagRepository.save(tag);
+        }
+        results.push({ name: t.name, status: 'exists' });
+      }
+    }
+
+    return { success: true, tags: results };
   }
 
   async updateAllPhotoReferences() {

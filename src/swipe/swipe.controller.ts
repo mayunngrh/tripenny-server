@@ -16,35 +16,53 @@ export class SwipeController {
    * Workflow:
    * 1. Call /swipe/tags to get available tags for filtering
    * 2. Call /swipe/regencies to get available regencies (districts/cities)
-   * 3. Call /swipe/cards with filters to get places matching your criteria
+   * 3. Call /swipe/budgets to get available budget tiers
+   * 4. Call /swipe/cards with filters to get places matching your criteria
+   *
+   * Location & Distance:
+   * - Proximity search: /swipe/cards?lat=-8.5069&lng=115.2625&radius=5000
+   *   Returns places within 5km, sorted by distance (nearest first), with distance in meters
    *
    * Filter Combinations:
-   * - Single regency: /swipe/cards?regency=Kota%20Denpasar
-   * - Single tag: /swipe/cards?tags=nature
-   * - Multiple tags: /swipe/cards?tags=nature,outdoor (returns places with ANY tag)
-   * - Regency + tags: /swipe/cards?regency=Kota%20Denpasar&tags=nature,outdoor
-   * - Category filter: /swipe/cards?category=tourist_attraction
-   * - All filters combined: /swipe/cards?category=tourist_attraction&regency=Kota%20Denpasar&tags=nature
+   * - By category: /swipe/cards?category=tourist_attraction
+   * - By regency: /swipe/cards?regency=Kota%20Denpasar
+   * - By tags: /swipe/cards?tags=nature,outdoor (returns places with ANY tag)
+   * - By budget: /swipe/cards?budgetId=2 (Mid-Range: 75k-200k IDR)
+   * - By location: /swipe/cards?lat=-8.5069&lng=115.2625&radius=5000
+   * - Combined: /swipe/cards?regency=Kota%20Denpasar&tags=nature&budgetId=2
+   * - Distance + budget: /swipe/cards?lat=-8.5069&lng=115.2625&radius=5000&budgetId=1
    */
 
   @Get('cards')
   @ApiOperation({
-    summary: 'Get paginated place cards for swiping',
-    description: `Returns place data optimized for swipe interface with filtering capabilities.
+    summary: 'Get paginated place cards sorted by distance and drive time from your location',
+    description: `Returns places near your current location with distance and estimated drive time.
 
-Filtering:
-- category: Filter by place type (e.g., tourist_attraction, restaurant, museum)
-- regency: Filter by Bali regency/district name (exact match, case-sensitive)
-- tags: Filter by one or more tags separated by commas (returns places with ANY matching tag)
+REQUIRED Parameters:
+- lat: Your current latitude (e.g., -8.5069)
+- lng: Your current longitude (e.g., 115.2625)
 
-All filters are optional and can be combined. Results are sorted by rating (highest first).
-Use /swipe/tags and /swipe/regencies to discover available filter values.
+OPTIONAL Query Filters:
+- page: Pagination (default: 1)
+- limit: Results per page (default: 5)
+- radius: Search radius in meters (default: 10000 = 10km)
+- category: Place type (e.g., tourist_attraction, restaurant, museum)
+- regency: Bali regency/district name (exact match) - use /swipe/regencies
+- tags: Comma-separated tags (returns places with ANY tag) - use /swipe/tags
+- budgetId: Budget tier (1=Budget/0-75k, 2=Mid-Range/75k-200k, 3=Premium/200k-500k)
+
+Response Includes:
+- distance: Distance in meters from your location
+- driveTimeMinutes: Estimated driving time from your location (based on 50km/h average speed)
+
+All results sorted by distance (nearest first).
 
 Examples:
-- /swipe/cards?page=1&limit=10 - Get first 10 places
-- /swipe/cards?regency=Kota%20Denpasar - Get places in Denpasar
-- /swipe/cards?tags=nature,outdoor - Get places tagged as nature OR outdoor
-- /swipe/cards?regency=Kota%20Denpasar&tags=nature - Get nature places in Denpasar`,
+- /swipe/cards?lat=-8.5069&lng=115.2625 - All places near you, sorted by distance
+- /swipe/cards?lat=-8.5069&lng=115.2625&radius=5000 - Places within 5km
+- /swipe/cards?lat=-8.5069&lng=115.2625&tags=surfing - Surfing spots near you
+- /swipe/cards?lat=-8.5069&lng=115.2625&budgetId=2 - Mid-range places near you
+- /swipe/cards?lat=-8.5069&lng=115.2625&radius=10000&budgetId=1&tags=beach - Budget beach places within 10km`,
   })
   @ApiQuery({
     name: 'page',
@@ -78,9 +96,37 @@ Examples:
     example: 'nature,outdoor',
     description: 'Filter by one or more tags (comma-separated, case-sensitive). Places matching ANY of the tags will be returned. Optional. Use /swipe/tags to see available values.',
   })
+  @ApiQuery({
+    name: 'lat',
+    type: Number,
+    required: true,
+    example: -8.5069,
+    description: 'Latitude of your current location (REQUIRED). Must be provided together with lng.',
+  })
+  @ApiQuery({
+    name: 'lng',
+    type: Number,
+    required: true,
+    example: 115.2625,
+    description: 'Longitude of your current location (REQUIRED). Must be provided together with lat.',
+  })
+  @ApiQuery({
+    name: 'radius',
+    type: Number,
+    required: false,
+    example: 5000,
+    description: 'Search radius in meters (default: 10000). Only used when lat and lng are provided.',
+  })
+  @ApiQuery({
+    name: 'budgetId',
+    type: Number,
+    required: false,
+    example: 2,
+    description: 'Filter by budget tier ID. Use /swipe/budgets to get available budget tiers.',
+  })
   @ApiResponse({
     status: 200,
-    description: 'Paginated list of place cards with complete information for display',
+    description: 'Paginated list of place cards sorted by distance from your location',
     schema: {
       example: {
         data: [
@@ -122,6 +168,8 @@ Examples:
               lat: -8.7211,
               lng: 115.1691,
             },
+            distance: 2450,
+            driveTimeMinutes: 6,
           },
         ],
         meta: {
@@ -135,21 +183,32 @@ Examples:
   })
   @ApiResponse({
     status: 400,
-    description: 'Bad request - invalid query parameters',
+    description: 'Bad request - lat and lng are required parameters',
   })
   async getCards(
+    @Query('lat') lat: string,
+    @Query('lng') lng: string,
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 5,
     @Query('category') category?: string,
     @Query('regency') regency?: string,
     @Query('tags') tags?: string,
+    @Query('radius') radius?: string,
+    @Query('budgetId') budgetId?: string,
   ) {
+    if (!lat || !lng) {
+      throw new Error('lat and lng are required parameters');
+    }
     return await this.swipeService.getCards(
+      parseFloat(lat),
+      parseFloat(lng),
       +page,
       +limit,
       category,
       regency,
       tags,
+      radius !== undefined ? parseFloat(radius) : undefined,
+      budgetId !== undefined ? parseInt(budgetId) : undefined,
     );
   }
 
@@ -335,5 +394,53 @@ Use regency names to filter places by location. Query parameter requires exact m
     const result = await this.swipeService.getTagsByRegency(id);
     if (!result) throw new NotFoundException(`Regency with id ${id} not found`);
     return result;
+  }
+
+  @Get('budgets')
+  @ApiOperation({
+    summary: 'Get all available budget tiers for filtering',
+    description: `Returns predefined budget tiers with min/max price ranges in Indonesian Rupiah (IDR).
+
+Budget Tiers:
+- Budget (id: 1): 0 - 75,000 IDR - affordable activities, temples, basic attractions
+- Mid-Range (id: 2): 75,000 - 200,000 IDR - most popular places, good value
+- Premium (id: 3): 200,000 - 500,000 IDR - high-end experiences, water parks, luxury activities
+
+Use the tier ID to filter places in /swipe/cards?budgetId=<id>
+
+Current price statistics across all places:
+- Minimum: 25,000 IDR
+- Maximum: 500,000 IDR
+- Average: 148,889 IDR
+- 63 places have pricing data out of 76 total`,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Array of budget tiers ordered by minimum price',
+    schema: {
+      example: [
+        {
+          id: 1,
+          name: 'Budget',
+          minPrice: 0,
+          maxPrice: 75000,
+        },
+        {
+          id: 2,
+          name: 'Mid-Range',
+          minPrice: 75000,
+          maxPrice: 200000,
+        },
+        {
+          id: 3,
+          name: 'Premium',
+          minPrice: 200000,
+          maxPrice: 500000,
+        },
+      ],
+    },
+  })
+  async getBudgets() {
+    return await this.swipeService.getBudgets();
   }
 }
