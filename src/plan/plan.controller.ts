@@ -10,14 +10,32 @@ import { PlanService } from './plan.service';
  * - Estimated budget/cost
  * - Multiple items (places to visit) organized by day
  *
- * Workflow:
+ * ENDPOINTS:
  * 1. POST /plans - Create a new trip plan
- * 2. GET /plans - View all your plans
- * 3. GET /plans/:id - View specific plan details
- * 4. POST /plans/:id/items - Add places to your plan
- * 5. PUT /plans/:id - Update plan details
- * 6. DELETE /plans/:id/items/:itemId - Remove place from plan
- * 7. DELETE /plans/:id - Delete entire plan
+ * 2. GET /plans/active - Get ONLY active plans (endDate >= today) - Use for "My Plans"
+ * 3. GET /plans/history - Get ONLY past plans (endDate < today) - Use for trip history/memories
+ * 4. GET /plans - Get ALL plans (active + past)
+ * 5. GET /plans/:id - View specific plan details
+ * 6. POST /plans/:id/items - Add places to your plan
+ * 7. PUT /plans/:id - Update plan details
+ * 8. DELETE /plans/:id/items/:itemId - Remove place from plan
+ * 9. DELETE /plans/:id - Delete entire plan
+ *
+ * KEY CONCEPT - Active vs History:
+ * - ACTIVE PLANS: endDate >= today (trips you're doing now or in the future)
+ *   - Use for "My Plans" / "Upcoming Trips" section
+ *   - Sorted by start date (soonest first)
+ *   - Shows what trips user is currently planning or going on
+ *
+ * - HISTORY PLANS: endDate < today (trips already completed)
+ *   - Use for "Trip History" / "Memories" section
+ *   - Sorted by end date (most recent first)
+ *   - Archive of past experiences
+ *
+ * TYPICAL USER WORKFLOW:
+ * 1. User opens app → GET /plans/active shows upcoming trips
+ * 2. User wants to relive past trips → GET /plans/history shows completed trips
+ * 3. User wants to see everything → GET /plans shows all trips combined
  *
  * Each plan item includes:
  * - Place (auto-linked with rating, price, category, coordinates)
