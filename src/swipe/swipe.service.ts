@@ -130,7 +130,7 @@ export class SwipeService {
         return {
           id: p.id,
           name: p.name,
-          rating: p.rating,
+          rating: parseFloat(p.rating as any),
           totalRatings: p.totalRatings,
           priceLevel: p.priceLevel,
           price: p.price,

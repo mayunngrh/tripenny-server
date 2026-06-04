@@ -58,11 +58,11 @@ Response Includes:
 All results sorted by distance (nearest first).
 
 Examples:
-- /swipe/cards?lat=-8.5069&lng=115.2625 - All places near you, sorted by distance
-- /swipe/cards?lat=-8.5069&lng=115.2625&radius=5000 - Places within 5km
-- /swipe/cards?lat=-8.5069&lng=115.2625&tagIds=9 - Nature spots near you
-- /swipe/cards?lat=-8.5069&lng=115.2625&budgetId=2 - Mid-range places near you
-- /swipe/cards?lat=-8.5069&lng=115.2625&radius=10000&budgetId=1&tagIds=3 - Budget beaches within 10km`,
+- /swipe/cards?lat=-8.5069&lng=115.2625 - All places within 10km, sorted by distance
+- /swipe/cards?lat=-8.5069&lng=115.2625&radius=50000 - All places within 50km
+- /swipe/cards?lat=-8.5069&lng=115.2625&tagIds=9 - Nature spots within 10km
+- /swipe/cards?lat=-8.5069&lng=115.2625&budgetId=2 - Mid-range places within 10km
+- /swipe/cards?lat=-8.5069&lng=115.2625&regencyId=6&radius=50000 - Denpasar places within 50km`,
   })
   @ApiQuery({
     name: 'lat',
