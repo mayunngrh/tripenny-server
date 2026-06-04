@@ -223,7 +223,7 @@ Returns: Array of plan objects sorted by creation date (newest first). Each plan
     description: `Retrieve a single plan with all its details and associated places.
 
 This endpoint is useful when you want to view the complete itinerary for a specific trip,
-including all places, visit times, notes, and place details (ratings, prices, coordinates).`,
+including all places and place details (ratings, prices, location, description).`,
   })
   @ApiParam({
     name: 'id',
@@ -241,18 +241,29 @@ including all places, visit times, notes, and place details (ratings, prices, co
         startDate: '2026-11-14',
         endDate: '2026-11-16',
         estimatedCost: 466250,
+        activitiesCount: 7,
         items: [
           {
             id: 1,
-            dayIndex: 1,
-            visitTime: '09:00:00',
-            notes: 'Sunrise visit',
             place: {
               id: 281,
               name: 'Pura Tirta Empul',
               rating: 4.6,
+              totalRatings: 29724,
+              priceLevel: 1,
               price: 50000,
               category: 'tourist_attraction',
+              address: 'Tampaksiring',
+              district: null,
+              regency: {
+                id: 2,
+                name: 'Kabupaten Gianyar',
+              },
+              province: 'Bali',
+              description: 'Hindu Balinese temple with a bathing area',
+              photoReference: 'Ab43m-u7rYhfzFifs...',
+              latitude: '-8.41565890',
+              longitude: '115.31532840',
             },
           },
         ],

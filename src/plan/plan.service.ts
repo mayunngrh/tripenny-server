@@ -52,13 +52,47 @@ export class PlanService {
     return await this.planItemRepository.save(item);
   }
 
-  async getPlanById(planId: number): Promise<Plan | null> {
-    return await this.planRepository.findOne({
+  async getPlanById(planId: number): Promise<any> {
+    const plan = await this.planRepository.findOne({
       where: { id: planId },
       relations: {
         items: { place: true },
       },
     });
+
+    if (!plan) return null;
+
+    return {
+      id: plan.id,
+      name: plan.name,
+      startDate: plan.startDate,
+      endDate: plan.endDate,
+      estimatedCost: plan.estimatedCost,
+      activitiesCount: plan.items?.length || 0,
+      items: plan.items.map((item) => ({
+        id: item.id,
+        place: item.place
+          ? {
+              id: item.place.id,
+              name: item.place.name,
+              rating: item.place.rating,
+              totalRatings: item.place.totalRatings,
+              priceLevel: item.place.priceLevel,
+              price: item.place.price,
+              category: item.place.category,
+              address: item.place.address,
+              district: item.place.district,
+              regency: item.place.regency,
+              province: item.place.province,
+              description: item.place.description,
+              photoReference: item.place.photoReference,
+              latitude: item.place.latitude,
+              longitude: item.place.longitude,
+            }
+          : null,
+      })),
+      createdAt: plan.createdAt,
+    };
   }
 
   async getAllPlans(): Promise<Plan[]> {
