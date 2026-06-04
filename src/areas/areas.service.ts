@@ -25,27 +25,34 @@ export class AreasService {
       id: area.id,
       name: area.name,
       description: area.description,
-      regency: {
-        id: area.regency.id,
-        name: area.regency.name,
-      },
+      regencyId: area.regencyId,
+      regency: area.regency
+        ? {
+            id: area.regency.id,
+            name: area.regency.name,
+          }
+        : null,
     };
   }
 
   async getPopularAreas() {
-    const areas = await this.areaRepository.find({
-      relations: { regency: true },
-      order: { name: 'ASC' },
-    });
+    const areas = await this.areaRepository
+      .createQueryBuilder('area')
+      .leftJoinAndSelect('area.regency', 'regency')
+      .orderBy('area.name', 'ASC')
+      .getMany();
 
     return areas.map((area) => ({
       id: area.id,
       name: area.name,
       description: area.description,
-      regency: {
-        id: area.regency.id,
-        name: area.regency.name,
-      },
+      regencyId: area.regencyId,
+      regency: area.regency
+        ? {
+            id: area.regency.id,
+            name: area.regency.name,
+          }
+        : null,
     }));
   }
 
