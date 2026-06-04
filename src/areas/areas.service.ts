@@ -13,29 +13,7 @@ export class AreasService {
     private regencyRepository: Repository<Regency>,
   ) {}
 
-  async searchArea(areaName: string) {
-    const area = await this.areaRepository.findOne({
-      where: { name: areaName },
-      relations: { regency: true },
-    });
-
-    if (!area) return null;
-
-    return {
-      id: area.id,
-      name: area.name,
-      description: area.description,
-      regencyId: area.regencyId,
-      regency: area.regency
-        ? {
-            id: area.regency.id,
-            name: area.regency.name,
-          }
-        : null,
-    };
-  }
-
-  async autocompleteArea(query: string) {
+  async searchArea(query: string) {
     if (!query || query.length < 1) {
       return [];
     }

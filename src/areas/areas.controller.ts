@@ -20,7 +20,7 @@ import { AreasService } from './areas.service';
  * 3. User can then filter places by that area/regency
  *
  * AVAILABLE ENDPOINTS:
- * - GET /areas/search?area=ubud - Search for specific area
+ * - GET /areas/search?area=ubud - Search areas (exact or prefix match, case-insensitive)
  * - GET /areas/popular - Browse all 30 famous areas
  * - POST /areas/seed - Seed 30 famous areas (admin only)
  */
@@ -30,74 +30,28 @@ import { AreasService } from './areas.service';
 export class AreasController {
   constructor(private areasService: AreasService) {}
 
-  @Get('autocomplete')
-  @ApiOperation({
-    summary: 'Autocomplete/prefix search for areas',
-    description: `Real-time autocomplete search for areas as user types.
-
-HOW IT WORKS:
-- Type any prefix to get matching areas
-- Returns all areas that START WITH the typed text
-- Results sorted alphabetically
-
-EXAMPLES:
-- /areas/autocomplete?q=be → Bedugul
-- /areas/autocomplete?q=ub → Ubud
-- /areas/autocomplete?q=ka → Kuta, Kintamani
-- /areas/autocomplete?q=am → Amed
-- /areas/autocomplete?q=se → Seminyak, Sekumpul
-- /areas/autocomplete?q=bu → Buleleng, Bedugul
-
-TYPICAL UI FLOW:
-User types in search box and gets live suggestions with regency info.`,
-  })
-  @ApiQuery({
-    name: 'q',
-    type: String,
-    required: true,
-    example: 'be',
-    description: 'Search query prefix (case-insensitive). Examples: be, ub, ka, am, se',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'List of matching areas with regency info',
-    schema: {
-      example: [
-        {
-          id: 41,
-          name: 'Bedugul',
-          description: 'Mountain town with lakes and gardens',
-          regency: {
-            id: 7,
-            name: 'Kabupaten Tabanan',
-          },
-        },
-      ],
-    },
-  })
-  async autocompleteArea(@Query('q') query: string) {
-    return await this.areasService.autocompleteArea(query);
-  }
-
   @Get('search')
   @ApiOperation({
-    summary: 'Search for a famous tourist area',
-    description: `Search for a specific famous tourist area in Bali and get its regency information.
+    summary: 'Search for areas by name (exact or prefix match)',
+    description: `Search for tourist areas in Bali. Supports both exact match and prefix search.
+
+SEARCH MODES:
+1. EXACT MATCH: /areas/search?area=ubud → Returns Ubud only
+2. PREFIX SEARCH: /areas/search?area=be → Returns all areas starting with "be" (Bedugul)
+3. CASE-INSENSITIVE: /areas/search?area=UBUD, /areas/search?area=Ubud, /areas/search?area=ubud all work
 
 WHAT YOU GET:
-- Area name (e.g., "Ubud", "Canggu")
+- Area name
 - Area description
-- Regency ID and name (administrative region)
+- Regency ID and name
+- Sorted alphabetically if multiple results
 
-EXAMPLE:
-Search: /areas/search?area=ubud
-Response:
-{
-  "id": 1,
-  "name": "Ubud",
-  "description": "Cultural heart of Bali with arts, crafts, and nature",
-  "regency": { "id": 2, "name": "Kabupaten Gianyar" }
-}
+EXAMPLES:
+- /areas/search?area=ubud → Ubud (exact match)
+- /areas/search?area=be → Bedugul (prefix search)
+- /areas/search?area=k → Kintamani, Klungkung, Kuta (prefix search, all start with K)
+- /areas/search?area=se → Sekumpul, Seminyak (prefix search, both start with Se)
+- /areas/search?area=SEMINYAK → Seminyak (case-insensitive)
 
 SUPPORTED AREAS (30 total):
 Ubud, Canggu, Seminyak, Kuta, Jimbaran, Uluwatu, Nusa Dua, Sanur, Pecatu,
@@ -110,31 +64,35 @@ Pekutatan, Nusa Penida, Tegallalang, Padang Padang, Lembongan`,
     type: String,
     required: true,
     example: 'ubud',
-    description: 'Area name (case-insensitive, exact match). Examples: Ubud, Seminyak, Canggu, Kuta, Bedugul',
+    description: 'Area name for search (case-insensitive). Can be exact match or prefix. Examples: ubud, be, k, se',
   })
   @ApiResponse({
     status: 200,
-    description: 'Area found with regency information',
+    description: 'Area(s) found with regency information',
     schema: {
-      example: {
-        id: 1,
-        name: 'Ubud',
-        description: 'Cultural heart of Bali with arts, crafts, and nature',
-        regency: {
-          id: 2,
-          name: 'Kabupaten Gianyar',
+      example: [
+        {
+          id: 31,
+          name: 'Ubud',
+          description: 'Cultural heart of Bali with arts, crafts, and nature',
+          regency: {
+            id: 2,
+            name: 'Kabupaten Gianyar',
+          },
         },
-      },
+      ],
     },
   })
   @ApiResponse({
     status: 404,
-    description: 'Area not found',
+    description: 'No areas found matching the search',
   })
   async searchArea(@Query('area') area: string) {
-    const result = await this.areasService.searchArea(area);
-    if (!result) throw new NotFoundException(`Area "${area}" not found`);
-    return result;
+    const results = await this.areasService.searchArea(area);
+    if (!results || results.length === 0) {
+      throw new NotFoundException(`No areas found matching "${area}"`);
+    }
+    return results;
   }
 
   @Get('popular')
