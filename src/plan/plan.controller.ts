@@ -11,13 +11,13 @@ import { PlanService } from './plan.service';
  * - Multiple items (places to visit) organized by day
  *
  * ENDPOINTS:
- * 1. POST /plans - Create a new trip plan
+ * 1. POST /plans - Create a new trip plan WITH places (placeIds array)
  * 2. GET /plans/active - Get ONLY active plans (endDate >= today) - Use for "My Plans"
  * 3. GET /plans/history - Get ONLY past plans (endDate < today) - Use for trip history/memories
  * 4. GET /plans - Get ALL plans (active + past)
  * 5. GET /plans/:id - View specific plan details
- * 6. POST /plans/:id/items - Add places to your plan
- * 7. PUT /plans/:id - Update plan details
+ * 6. POST /plans/:id/items - Add MORE places to an existing plan
+ * 7. PUT /plans/:id - Update plan details (name, dates, cost)
  * 8. DELETE /plans/:id/items/:itemId - Remove place from plan
  * 9. DELETE /plans/:id - Delete entire plan
  *
@@ -33,12 +33,13 @@ import { PlanService } from './plan.service';
  *   - Archive of past experiences
  *
  * TYPICAL USER WORKFLOW:
- * 1. User opens app → GET /plans/active shows upcoming trips
- * 2. User wants to relive past trips → GET /plans/history shows completed trips
- * 3. User wants to see everything → GET /plans shows all trips combined
+ * 1. User creates plan → POST /plans with placeIds [281, 282, 300] (all added to day 1)
+ * 2. User wants to add more places → POST /plans/:id/items to add more
+ * 3. User wants to see upcoming trips → GET /plans/active
+ * 4. User wants to see past trips → GET /plans/history
  *
  * Each plan item includes:
- * - Place (auto-linked with rating, price, category, coordinates)
+ * - Place (auto-linked with rating, price, category, address, etc.)
  * - Day index (which day of the trip, 1-indexed)
  * - Visit time (optional, 24-hour format)
  * - Notes (optional, any custom notes for this visit)
@@ -51,39 +52,77 @@ export class PlanController {
 
   @Post()
   @ApiOperation({
-    summary: 'Create a new trip plan',
-    description: `Create a new trip plan. This is the first step in planning your Bali adventure.
+    summary: 'Create a new trip plan with multiple places',
+    description: `Create a new trip plan with multiple places in ONE request. All places are added to day 1 by default.
+
+This is the recommended way to create a plan on the frontend - send all the places you want at creation time.
 
 Request Body:
-- name: Trip name (e.g., "Ubud Exploration", "Bali Beach Holiday")
-- startDate: Trip start date (ISO format: YYYY-MM-DD)
-- endDate: Trip end date (ISO format: YYYY-MM-DD)
+- name: Trip name (e.g., "Ubud Exploration", "Bali Beach Holiday") - REQUIRED
+- startDate: Trip start date (ISO format: YYYY-MM-DD) - REQUIRED
+- endDate: Trip end date (ISO format: YYYY-MM-DD) - REQUIRED
 - estimatedCost: (Optional) Estimated total budget in IDR
+- placeIds: (Optional) Array of place IDs to add to the plan
+  * Get place IDs from /swipe/cards endpoint
+  * All places added to day 1 by default
+  * Can add more places later with POST /plans/:id/items
 
-Returns: Created plan object with empty items array`,
+Example:
+- Create plan with 3 places: POST /plans with placeIds [281, 282, 300]
+- Add more places later: POST /plans/1/items with placeId 400
+
+Returns: Created plan with all places, items organized by day`,
   })
   @ApiBody({
     schema: {
       example: {
-        name: 'Ubud Exploration',
+        name: 'Ubud & Nature Tour',
         startDate: '2026-11-14',
         endDate: '2026-11-16',
-        estimatedCost: 466250,
+        estimatedCost: 750000,
+        placeIds: [281, 282, 300],
       },
     },
   })
   @ApiResponse({
     status: 201,
-    description: 'Plan created successfully',
+    description: 'Plan created successfully with places',
     schema: {
       example: {
         id: 1,
-        name: 'Ubud Exploration',
+        name: 'Ubud & Nature Tour',
         startDate: '2026-11-14',
         endDate: '2026-11-16',
-        estimatedCost: 466250,
-        items: [],
-        createdAt: '2026-06-03T10:00:00Z',
+        estimatedCost: 750000,
+        items: [
+          {
+            id: 1,
+            dayIndex: 1,
+            visitTime: null,
+            notes: null,
+            place: {
+              id: 281,
+              name: 'Pura Tirta Empul',
+              rating: 4.6,
+              price: 50000,
+              category: 'tourist_attraction',
+            },
+          },
+          {
+            id: 2,
+            dayIndex: 1,
+            visitTime: null,
+            notes: null,
+            place: {
+              id: 282,
+              name: 'Pemulan Bali Farm Cooking School',
+              rating: 5.0,
+              price: 0,
+              category: 'tourist_attraction',
+            },
+          },
+        ],
+        createdAt: '2026-06-04T10:00:00Z',
       },
     },
   })
@@ -92,12 +131,14 @@ Returns: Created plan object with empty items array`,
     @Body('startDate') startDate: string,
     @Body('endDate') endDate: string,
     @Body('estimatedCost') estimatedCost?: number,
+    @Body('placeIds') placeIds?: number[],
   ) {
     return await this.planService.createPlan(
       name,
       new Date(startDate),
       new Date(endDate),
       estimatedCost,
+      placeIds,
     );
   }
 
@@ -283,19 +324,29 @@ including all places and place details (ratings, prices, location, description).
 
   @Post(':id/items')
   @ApiOperation({
-    summary: 'Add a place to a plan',
-    description: `Add a place (destination) to your trip plan. Organize multiple places by day and time.
+    summary: 'Add MORE places to an existing plan',
+    description: `Add additional place(s) to your existing trip plan. Use this after creating a plan to add more places or reorganize them by day/time.
+
+This endpoint is useful when:
+- You want to add more places after the plan was created
+- You want to add a place to a specific day (not just day 1)
+- You want to set a specific visit time or add notes
 
 Request Body:
-- placeId: ID of the place to add (get from /swipe/cards)
-- dayIndex: Which day of the trip (1 = first day, 2 = second day, etc.)
-- visitTime: (Optional) Preferred visit time in HH:MM format (24-hour)
+- placeId: ID of the place to add (get from /swipe/cards) - REQUIRED
+- dayIndex: Which day of the trip (1 = first day, 2 = second day, etc.) - REQUIRED
+- visitTime: (Optional) Preferred visit time in HH:MM format (24-hour, e.g., "14:30")
 - notes: (Optional) Custom notes for this visit (e.g., "Bring swimwear", "Book guide ahead")
 
 Example: If your trip is Nov 14-16 (3 days):
 - Day 1 = Nov 14, Day 2 = Nov 15, Day 3 = Nov 16
 
-You can add multiple places to the same day.`,
+You can add multiple places to the same day with different times.
+
+WORKFLOW:
+1. Create plan: POST /plans with placeIds [281, 282]
+2. Add more to day 2: POST /plans/1/items with placeId=300, dayIndex=2, visitTime="14:30"
+3. Add more to day 3: POST /plans/1/items with placeId=400, dayIndex=3`,
   })
   @ApiParam({
     name: 'id',

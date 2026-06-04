@@ -21,15 +21,60 @@ export class PlanService {
     startDate: Date,
     endDate: Date,
     estimatedCost?: number,
-  ): Promise<Plan> {
+    placeIds?: number[],
+  ): Promise<any> {
     const plan = this.planRepository.create({
       name,
       startDate,
       endDate,
       estimatedCost,
-      items: [],
     });
-    return await this.planRepository.save(plan);
+    const savedPlan = await this.planRepository.save(plan);
+
+    // Add places to the plan if placeIds provided
+    if (placeIds && placeIds.length > 0) {
+      for (const placeId of placeIds) {
+        const place = await this.placeRepository.findOne({ where: { id: placeId } });
+        if (place) {
+          await this.planItemRepository.save({
+            plan: savedPlan,
+            place,
+            dayIndex: 1,
+            visitTime: null,
+            notes: undefined,
+          });
+        }
+      }
+    }
+
+    const planWithItems = await this.planRepository.findOne({
+      where: { id: savedPlan.id },
+      relations: { items: { place: true } },
+    });
+
+    return {
+      id: planWithItems!.id,
+      name: planWithItems!.name,
+      startDate: planWithItems!.startDate,
+      endDate: planWithItems!.endDate,
+      estimatedCost: planWithItems!.estimatedCost,
+      items: planWithItems!.items.map((item) => ({
+        id: item.id,
+        dayIndex: item.dayIndex,
+        visitTime: item.visitTime,
+        notes: item.notes,
+        place: item.place
+          ? {
+              id: item.place.id,
+              name: item.place.name,
+              rating: parseFloat(item.place.rating as any),
+              price: item.place.price ?? 0,
+              category: item.place.category,
+            }
+          : null,
+      })),
+      createdAt: planWithItems!.createdAt,
+    };
   }
 
   async addItemToPlan(
@@ -75,10 +120,10 @@ export class PlanService {
           ? {
               id: item.place.id,
               name: item.place.name,
-              rating: item.place.rating,
+              rating: parseFloat(item.place.rating as any),
               totalRatings: item.place.totalRatings,
               priceLevel: item.place.priceLevel,
-              price: item.place.price,
+              price: item.place.price ?? 0,
               category: item.place.category,
               address: item.place.address,
               district: item.place.district,
@@ -86,8 +131,8 @@ export class PlanService {
               province: item.place.province,
               description: item.place.description,
               photoReference: item.place.photoReference,
-              latitude: item.place.latitude,
-              longitude: item.place.longitude,
+              latitude: parseFloat(item.place.latitude as any),
+              longitude: parseFloat(item.place.longitude as any),
             }
           : null,
       })),
