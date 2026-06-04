@@ -133,7 +133,7 @@ export class SwipeService {
           rating: parseFloat(p.rating as any),
           totalRatings: p.totalRatings,
           priceLevel: p.priceLevel,
-          price: p.price,
+          price: p.price ?? 0,
           category: p.category,
           address: p.address,
           district: p.district,
