@@ -36,24 +36,31 @@ export class AreasService {
   }
 
   async getPopularAreas() {
-    const areas = await this.areaRepository
-      .createQueryBuilder('area')
-      .leftJoinAndSelect('area.regency', 'regency')
-      .orderBy('area.name', 'ASC')
-      .getMany();
+    try {
+      // Get all areas with their regencies
+      const areas = await this.areaRepository
+        .createQueryBuilder('area')
+        .leftJoinAndSelect('area.regency', 'regency')
+        .orderBy('area.name', 'ASC')
+        .getMany();
 
-    return areas.map((area) => ({
-      id: area.id,
-      name: area.name,
-      description: area.description,
-      regencyId: area.regencyId,
-      regency: area.regency
-        ? {
-            id: area.regency.id,
-            name: area.regency.name,
-          }
-        : null,
-    }));
+      console.log('Found areas:', areas.length);
+
+      return areas.map((area) => ({
+        id: area.id,
+        name: area.name,
+        description: area.description,
+        regency: area.regency
+          ? {
+              id: area.regency.id,
+              name: area.regency.name,
+            }
+          : null,
+      }));
+    } catch (error) {
+      console.error('Error in getPopularAreas:', error);
+      throw error;
+    }
   }
 
   async seedAreas() {
