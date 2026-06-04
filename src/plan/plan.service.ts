@@ -98,11 +98,11 @@ export class PlanService {
     return result.affected ? result.affected > 0 : false;
   }
 
-  async getActivePlans(): Promise<Plan[]> {
+  async getActivePlans(): Promise<any[]> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    return await this.planRepository
+    const plans = await this.planRepository
       .createQueryBuilder('plan')
       .leftJoinAndSelect('plan.items', 'items')
       .leftJoinAndSelect('items.place', 'place')
@@ -110,13 +110,33 @@ export class PlanService {
       .orderBy('plan.startDate', 'ASC')
       .addOrderBy('plan.createdAt', 'DESC')
       .getMany();
+
+    const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+
+    return plans.map((plan) => {
+      const firstPlace = plan.items?.[0]?.place;
+      const thumbnailUrl = firstPlace?.photoReference
+        ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${firstPlace.photoReference}&key=${apiKey}`
+        : null;
+
+      return {
+        id: plan.id,
+        name: plan.name,
+        startDate: plan.startDate,
+        endDate: plan.endDate,
+        estimatedCost: plan.estimatedCost,
+        itemCount: plan.items?.length || 0,
+        thumbnailUrl,
+        createdAt: plan.createdAt,
+      };
+    });
   }
 
-  async getPlanHistory(): Promise<Plan[]> {
+  async getPlanHistory(): Promise<any[]> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    return await this.planRepository
+    const plans = await this.planRepository
       .createQueryBuilder('plan')
       .leftJoinAndSelect('plan.items', 'items')
       .leftJoinAndSelect('items.place', 'place')
@@ -124,5 +144,25 @@ export class PlanService {
       .orderBy('plan.endDate', 'DESC')
       .addOrderBy('plan.createdAt', 'DESC')
       .getMany();
+
+    const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+
+    return plans.map((plan) => {
+      const firstPlace = plan.items?.[0]?.place;
+      const thumbnailUrl = firstPlace?.photoReference
+        ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${firstPlace.photoReference}&key=${apiKey}`
+        : null;
+
+      return {
+        id: plan.id,
+        name: plan.name,
+        startDate: plan.startDate,
+        endDate: plan.endDate,
+        estimatedCost: plan.estimatedCost,
+        itemCount: plan.items?.length || 0,
+        thumbnailUrl,
+        createdAt: plan.createdAt,
+      };
+    });
   }
 }

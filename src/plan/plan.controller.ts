@@ -108,15 +108,15 @@ Returns: Created plan object with empty items array`,
 
 Perfect for:
 - "My Plans" section in the app
-- Upcoming trips only
-- Active itineraries to work on
+- Upcoming trips cards/list view
+- Quick overview without full details
 
-Returns: Array of plan objects with endDate >= today, sorted by start date (soonest first).
-Each plan includes all items and places.`,
+Returns: Simplified plan list with thumbnail from first place.
+Each item includes plan info, item count, and thumbnail photo URL from the first place added.`,
   })
   @ApiResponse({
     status: 200,
-    description: 'List of active plans (not yet passed)',
+    description: 'List of active plans with thumbnail',
     schema: {
       example: [
         {
@@ -125,20 +125,8 @@ Each plan includes all items and places.`,
           startDate: '2026-11-14',
           endDate: '2026-11-16',
           estimatedCost: 466250,
-          items: [
-            {
-              id: 1,
-              dayIndex: 1,
-              visitTime: '09:00:00',
-              notes: 'Morning visit',
-              place: {
-                id: 281,
-                name: 'Pura Tirta Empul',
-                rating: 4.6,
-                price: 50000,
-              },
-            },
-          ],
+          itemCount: 3,
+          thumbnailUrl: 'https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=...',
           createdAt: '2026-06-03T10:00:00Z',
         },
       ],
@@ -154,16 +142,16 @@ Each plan includes all items and places.`,
     description: `Retrieve all trip plans that have already ended (endDate < today).
 
 Perfect for:
-- Trip history / memories
-- Past experiences tracking
+- Trip history / memories section
+- Past experiences viewing
 - Archive of completed trips
 
-Returns: Array of plan objects with endDate < today, sorted by end date (most recent first).
-Each plan includes all items and places.`,
+Returns: Simplified plan list with thumbnail from first place.
+Each item includes plan info, item count, and thumbnail photo URL from the first place visited.`,
   })
   @ApiResponse({
     status: 200,
-    description: 'List of past plans (already passed)',
+    description: 'List of past plans with thumbnail',
     schema: {
       example: [
         {
@@ -172,20 +160,8 @@ Each plan includes all items and places.`,
           startDate: '2026-05-10',
           endDate: '2026-05-12',
           estimatedCost: 550000,
-          items: [
-            {
-              id: 5,
-              dayIndex: 1,
-              visitTime: '14:00:00',
-              notes: 'Check-in and beach time',
-              place: {
-                id: 200,
-                name: 'Kuta Beach',
-                rating: 4.5,
-                price: null,
-              },
-            },
-          ],
+          itemCount: 5,
+          thumbnailUrl: 'https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=...',
           createdAt: '2026-05-05T08:30:00Z',
         },
       ],
