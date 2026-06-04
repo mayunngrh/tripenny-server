@@ -32,8 +32,8 @@ export class SwipeService {
     page: number = 1,
     limit: number = 5,
     category?: string,
-    regency?: string,
-    tags?: string,
+    regencyId?: number,
+    tagIds?: string,
     radius?: number,
     budgetId?: number,
   ) {
@@ -96,13 +96,13 @@ export class SwipeService {
       qb.andWhere('place.category = :category', { category });
     }
 
-    if (regency) {
-      qb.andWhere('regency.name = :regency', { regency });
+    if (regencyId) {
+      qb.andWhere('regency.id = :regencyId', { regencyId });
     }
 
-    if (tags) {
-      const tagNames = tags.split(',').map((t) => t.trim());
-      qb.andWhere('tags.name IN (:...tagNames)', { tagNames });
+    if (tagIds) {
+      const tagIdArray = tagIds.split(',').map((id) => parseInt(id.trim(), 10));
+      qb.andWhere('tags.id IN (:...tagIdArray)', { tagIdArray });
     }
 
     if (budgetId) {

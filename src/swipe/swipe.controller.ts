@@ -14,8 +14,8 @@ export class SwipeController {
    * All places include ratings, pricing, location coordinates, photos, and tags.
    *
    * Workflow:
-   * 1. Call /swipe/tags to get available tags for filtering
-   * 2. Call /swipe/regencies to get available regencies (districts/cities)
+   * 1. Call /swipe/tags to get available tags with their IDs for filtering
+   * 2. Call /swipe/regencies to get available regencies (districts/cities) with their IDs
    * 3. Call /swipe/budgets to get available budget tiers
    * 4. Call /swipe/cards with filters to get places matching your criteria
    *
@@ -25,11 +25,11 @@ export class SwipeController {
    *
    * Filter Combinations:
    * - By category: /swipe/cards?category=tourist_attraction
-   * - By regency: /swipe/cards?regency=Kota%20Denpasar
-   * - By tags: /swipe/cards?tags=nature,outdoor (returns places with ANY tag)
+   * - By regencyId: /swipe/cards?regencyId=8 (Kota Denpasar)
+   * - By tagIds: /swipe/cards?tagIds=1,9 (returns places with ANY of these tags)
    * - By budget: /swipe/cards?budgetId=2 (Mid-Range: 75k-200k IDR)
    * - By location: /swipe/cards?lat=-8.5069&lng=115.2625&radius=5000
-   * - Combined: /swipe/cards?regency=Kota%20Denpasar&tags=nature&budgetId=2
+   * - Combined: /swipe/cards?regencyId=8&tagIds=1&budgetId=2
    * - Distance + budget: /swipe/cards?lat=-8.5069&lng=115.2625&radius=5000&budgetId=1
    */
 
@@ -47,8 +47,8 @@ OPTIONAL Query Filters:
 - limit: Results per page (default: 5)
 - radius: Search radius in meters (default: 10000 = 10km)
 - category: Place type (e.g., tourist_attraction, restaurant, museum)
-- regency: Bali regency/district name (exact match) - use /swipe/regencies
-- tags: Comma-separated tags (returns places with ANY tag) - use /swipe/tags
+- regencyId: Bali regency ID (numeric) - use /swipe/regencies to get IDs
+- tagIds: Comma-separated tag IDs (returns places with ANY tag) - use /swipe/tags to get IDs
 - budgetId: Budget tier (1=Budget/0-75k, 2=Mid-Range/75k-200k, 3=Premium/200k-500k)
 
 Response Includes:
@@ -60,41 +60,9 @@ All results sorted by distance (nearest first).
 Examples:
 - /swipe/cards?lat=-8.5069&lng=115.2625 - All places near you, sorted by distance
 - /swipe/cards?lat=-8.5069&lng=115.2625&radius=5000 - Places within 5km
-- /swipe/cards?lat=-8.5069&lng=115.2625&tags=surfing - Surfing spots near you
+- /swipe/cards?lat=-8.5069&lng=115.2625&tagIds=9 - Nature spots near you
 - /swipe/cards?lat=-8.5069&lng=115.2625&budgetId=2 - Mid-range places near you
-- /swipe/cards?lat=-8.5069&lng=115.2625&radius=10000&budgetId=1&tags=beach - Budget beach places within 10km`,
-  })
-  @ApiQuery({
-    name: 'page',
-    type: Number,
-    required: false,
-    example: 1,
-    description: 'Page number for pagination (1-indexed, default: 1)',
-  })
-  @ApiQuery({
-    name: 'limit',
-    type: Number,
-    required: false,
-    example: 10,
-    description: 'Number of places per page (default: 5)',
-  })
-  @ApiQuery({
-    name: 'category',
-    required: false,
-    example: 'tourist_attraction',
-    description: 'Filter by place category. Optional.',
-  })
-  @ApiQuery({
-    name: 'regency',
-    required: false,
-    example: 'Kota Denpasar',
-    description: 'Filter by regency/district name (exact match). Optional. Use /swipe/regencies to see available values.',
-  })
-  @ApiQuery({
-    name: 'tags',
-    required: false,
-    example: 'nature,outdoor',
-    description: 'Filter by one or more tags (comma-separated, case-sensitive). Places matching ANY of the tags will be returned. Optional. Use /swipe/tags to see available values.',
+- /swipe/cards?lat=-8.5069&lng=115.2625&radius=10000&budgetId=1&tagIds=3 - Budget beaches within 10km`,
   })
   @ApiQuery({
     name: 'lat',
@@ -111,17 +79,45 @@ Examples:
     description: 'Longitude of your current location (REQUIRED). Must be provided together with lat.',
   })
   @ApiQuery({
+    name: 'page',
+    type: Number,
+    required: false,
+    example: 1,
+    description: 'Page number for pagination (1-indexed, default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    type: Number,
+    required: false,
+    example: 5,
+    description: 'Number of places per page (default: 5)',
+  })
+  @ApiQuery({
+    name: 'category',
+    required: false,
+    description: 'Filter by place category. Optional.',
+  })
+  @ApiQuery({
+    name: 'regencyId',
+    type: Number,
+    required: false,
+    description: 'Filter by regency ID (numeric). Optional. Use /swipe/regencies to get IDs.',
+  })
+  @ApiQuery({
+    name: 'tagIds',
+    required: false,
+    description: 'Filter by one or more tag IDs (comma-separated). Places matching ANY of the tags will be returned. Optional. Use /swipe/tags to get IDs.',
+  })
+  @ApiQuery({
     name: 'radius',
     type: Number,
     required: false,
-    example: 5000,
     description: 'Search radius in meters (default: 10000). Only used when lat and lng are provided.',
   })
   @ApiQuery({
     name: 'budgetId',
     type: Number,
     required: false,
-    example: 2,
     description: 'Filter by budget tier ID. Use /swipe/budgets to get available budget tiers.',
   })
   @ApiResponse({
@@ -191,8 +187,8 @@ Examples:
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 5,
     @Query('category') category?: string,
-    @Query('regency') regency?: string,
-    @Query('tags') tags?: string,
+    @Query('regencyId') regencyId?: string,
+    @Query('tagIds') tagIds?: string,
     @Query('radius') radius?: string,
     @Query('budgetId') budgetId?: string,
   ) {
@@ -205,8 +201,8 @@ Examples:
       +page,
       +limit,
       category,
-      regency,
-      tags,
+      regencyId !== undefined ? parseInt(regencyId) : undefined,
+      tagIds,
       radius !== undefined ? parseFloat(radius) : undefined,
       budgetId !== undefined ? parseInt(budgetId) : undefined,
     );

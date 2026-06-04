@@ -21,8 +21,7 @@ import { AreasService } from './areas.service';
  *
  * AVAILABLE ENDPOINTS:
  * - GET /areas/search?area=ubud - Search areas (exact or prefix match, case-insensitive)
- * - GET /areas/popular - Browse all 30 famous areas
- * - POST /areas/seed - Seed 30 famous areas (admin only)
+ * - GET /areas/popular - Browse all 60 famous areas
  */
 
 @ApiTags('areas')
@@ -53,11 +52,15 @@ EXAMPLES:
 - /areas/search?area=se → Sekumpul, Seminyak (prefix search, both start with Se)
 - /areas/search?area=SEMINYAK → Seminyak (case-insensitive)
 
-SUPPORTED AREAS (30 total):
+SUPPORTED AREAS (60 total):
 Ubud, Canggu, Seminyak, Kuta, Jimbaran, Uluwatu, Nusa Dua, Sanur, Pecatu,
 Tanjung Benoa, Bedugul, Kintamani, Jatiluwih, Tabanan, Amed, Rendang, Manggisari,
 Buleleng, Gerokgak, Sambang, Sekumpul, Gianyar, Bangli, Klungkung, Denpasar,
-Pekutatan, Nusa Penida, Tegallalang, Padang Padang, Lembongan`,
+Pekutatan, Nusa Penida, Tegallalang, Padang Padang, Lembongan, Lovina, Perasi,
+Sanur, Jimbaran, Uluwatu, Pecatu, Tanjung Benoa, Padang Padang, Kintamani,
+Jatiluwih, Tabanan, Sangeh, Tegallalang, Gianyar, Tirta Empul, Goa Gajah,
+Tampaksiring, Blahbatuh, Bangli, Klungkung, Lembongan, Nusa Penida, Denpasar,
+Rendang, Manggisari, Candidasa, Bebandem, Lipah Bay, Tulamben, Pekutatan`,
   })
   @ApiQuery({
     name: 'area',
@@ -97,8 +100,8 @@ Pekutatan, Nusa Penida, Tegallalang, Padang Padang, Lembongan`,
 
   @Get('popular')
   @ApiOperation({
-    summary: 'Get all 30 famous tourist areas in Bali',
-    description: `Get complete list of all 30 famous tourist areas with their regencies and descriptions.
+    summary: 'Get all 60 famous tourist areas in Bali',
+    description: `Get complete list of all 60 famous tourist areas with their regencies and descriptions.
 
 Perfect for:
 - Build area selection dropdown/list for users
@@ -119,7 +122,7 @@ And more...`,
   })
   @ApiResponse({
     status: 200,
-    description: 'List of all 30 areas',
+    description: 'List of all 60 areas',
     schema: {
       example: [
         {
@@ -141,16 +144,4 @@ And more...`,
     return await this.areasService.getPopularAreas();
   }
 
-  @Post('seed')
-  @ApiOperation({
-    summary: 'Seed 30 famous areas (admin only)',
-    description: 'Initialize database with 30 famous tourist areas in Bali',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Areas seeded successfully',
-  })
-  async seedAreas() {
-    return await this.areasService.seedAreas();
-  }
 }
