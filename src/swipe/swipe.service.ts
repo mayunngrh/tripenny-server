@@ -145,8 +145,8 @@ export class SwipeService {
             ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=${p.photoReference}&key=${apiKey}`
             : null,
           coordinates: {
-            lat: p.latitude,
-            lng: p.longitude,
+            lat: parseFloat(p.latitude as any),
+            lng: parseFloat(p.longitude as any),
           },
           distance: distanceMeters,
           driveTimeMinutes: driveTimeMinutes,
