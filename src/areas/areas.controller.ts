@@ -30,6 +30,55 @@ import { AreasService } from './areas.service';
 export class AreasController {
   constructor(private areasService: AreasService) {}
 
+  @Get('autocomplete')
+  @ApiOperation({
+    summary: 'Autocomplete/prefix search for areas',
+    description: `Real-time autocomplete search for areas as user types.
+
+HOW IT WORKS:
+- Type any prefix to get matching areas
+- Returns all areas that START WITH the typed text
+- Results sorted alphabetically
+
+EXAMPLES:
+- /areas/autocomplete?q=be → Bedugul
+- /areas/autocomplete?q=ub → Ubud
+- /areas/autocomplete?q=ka → Kuta, Kintamani
+- /areas/autocomplete?q=am → Amed
+- /areas/autocomplete?q=se → Seminyak, Sekumpul
+- /areas/autocomplete?q=bu → Buleleng, Bedugul
+
+TYPICAL UI FLOW:
+User types in search box and gets live suggestions with regency info.`,
+  })
+  @ApiQuery({
+    name: 'q',
+    type: String,
+    required: true,
+    example: 'be',
+    description: 'Search query prefix (case-insensitive). Examples: be, ub, ka, am, se',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'List of matching areas with regency info',
+    schema: {
+      example: [
+        {
+          id: 41,
+          name: 'Bedugul',
+          description: 'Mountain town with lakes and gardens',
+          regency: {
+            id: 7,
+            name: 'Kabupaten Tabanan',
+          },
+        },
+      ],
+    },
+  })
+  async autocompleteArea(@Query('q') query: string) {
+    return await this.areasService.autocompleteArea(query);
+  }
+
   @Get('search')
   @ApiOperation({
     summary: 'Search for a famous tourist area',

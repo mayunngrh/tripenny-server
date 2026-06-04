@@ -35,6 +35,31 @@ export class AreasService {
     };
   }
 
+  async autocompleteArea(query: string) {
+    if (!query || query.length < 1) {
+      return [];
+    }
+
+    const areas = await this.areaRepository
+      .createQueryBuilder('area')
+      .leftJoinAndSelect('area.regency', 'regency')
+      .where('LOWER(area.name) LIKE LOWER(:query)', { query: `${query}%` })
+      .orderBy('area.name', 'ASC')
+      .getMany();
+
+    return areas.map((area) => ({
+      id: area.id,
+      name: area.name,
+      description: area.description,
+      regency: area.regency
+        ? {
+            id: area.regency.id,
+            name: area.regency.name,
+          }
+        : null,
+    }));
+  }
+
   async getPopularAreas() {
     try {
       // Get all areas with their regencies
