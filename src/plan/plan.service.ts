@@ -122,7 +122,7 @@ export class PlanService {
               name: item.place.name,
               rating: parseFloat(item.place.rating as any),
               totalRatings: item.place.totalRatings,
-              priceLevel: item.place.priceLevel,
+              priceLevel: item.place.priceLevel ?? 0,
               price: item.place.price ?? 0,
               category: item.place.category,
               address: item.place.address,
