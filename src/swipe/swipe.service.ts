@@ -29,8 +29,6 @@ export class SwipeService {
   async getCards(
     lat: number,
     lng: number,
-    page: number = 1,
-    limit: number = 5,
     category?: string,
     regencyId?: number,
     tagIds?: string,
@@ -41,7 +39,6 @@ export class SwipeService {
       throw new Error('lat and lng are required parameters');
     }
 
-    const skip = (page - 1) * limit;
     const radiusMeters = radius ?? 10000;
 
     const qb = this.placeRepository
@@ -71,7 +68,7 @@ export class SwipeService {
         'regency.name',
       ]);
 
-    // Haversine formula — returns distance in meters
+    // Haversine formula — returns distance in meters (only if radius is provided)
     qb.addSelect(
       `(6371000 * acos(
         cos(radians(:lat)) * cos(radians(place.latitude)) *
@@ -81,16 +78,21 @@ export class SwipeService {
       'distance',
     )
       .setParameter('lat', lat)
-      .setParameter('lng', lng)
-      .andWhere(
+      .setParameter('lng', lng);
+
+    // Only apply radius filter if explicitly provided
+    if (radius) {
+      qb.andWhere(
         `(6371000 * acos(
           cos(radians(:lat)) * cos(radians(place.latitude)) *
           cos(radians(place.longitude) - radians(:lng)) +
           sin(radians(:lat)) * sin(radians(place.latitude))
         )) <= :radius`,
         { radius: radiusMeters },
-      )
-      .orderBy('distance', 'ASC');
+      );
+    }
+
+    qb.orderBy('distance', 'ASC');
 
     if (category) {
       qb.andWhere('place.category = :category', { category });
@@ -115,49 +117,44 @@ export class SwipeService {
       }
     }
 
-    qb.skip(skip).take(limit);
-
     const rawAndEntities = await qb.getRawAndEntities();
-    const [data, total] = [rawAndEntities.entities, rawAndEntities.entities.length];
+    const data = rawAndEntities.entities;
 
     const apiKey = process.env.GOOGLE_MAPS_API_KEY;
 
-    return {
-      data: data.map((p, i) => {
-        const distanceMeters = Math.round(parseFloat(rawAndEntities.raw[i]?.distance ?? '0'));
-        const driveTimeMinutes = this.calculateDriveTime(distanceMeters);
+    const places = data.map((p, i) => {
+      const distanceMeters = Math.round(parseFloat(rawAndEntities.raw[i]?.distance ?? '0'));
+      const driveTimeMinutes = this.calculateDriveTime(distanceMeters);
 
-        return {
-          id: p.id,
-          name: p.name,
-          rating: parseFloat(p.rating as any),
-          totalRatings: p.totalRatings,
-          priceLevel: p.priceLevel,
-          price: p.price ?? 0,
-          category: p.category,
-          address: p.address,
-          district: p.district,
-          regency: p.regency ? { id: p.regency.id, name: p.regency.name } : null,
-          province: p.province,
-          description: p.description,
-          tags: p.tags.map((t) => ({ id: t.id, name: t.name, iconName: t.iconName })),
-          photoUrl: p.photoReference
-            ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=${p.photoReference}&key=${apiKey}`
-            : null,
-          coordinates: {
-            lat: parseFloat(p.latitude as any),
-            lng: parseFloat(p.longitude as any),
-          },
-          distance: distanceMeters,
-          driveTimeMinutes: driveTimeMinutes,
-        };
-      }),
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-      },
+      return {
+        id: p.id,
+        name: p.name,
+        rating: parseFloat(p.rating as any),
+        totalRatings: p.totalRatings,
+        priceLevel: p.priceLevel,
+        price: p.price ?? 0,
+        category: p.category,
+        address: p.address,
+        district: p.district,
+        regency: p.regency ? { id: p.regency.id, name: p.regency.name } : null,
+        province: p.province,
+        description: p.description,
+        tags: p.tags.map((t) => ({ id: t.id, name: t.name, iconName: t.iconName })),
+        photoUrl: p.photoReference
+          ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=${p.photoReference}&key=${apiKey}`
+          : null,
+        coordinates: {
+          lat: parseFloat(p.latitude as any),
+          lng: parseFloat(p.longitude as any),
+        },
+        distance: distanceMeters,
+        driveTimeMinutes: driveTimeMinutes,
+      };
+    });
+
+    return {
+      data: places,
+      count: places.length,
     };
   }
 

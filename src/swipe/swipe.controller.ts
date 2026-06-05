@@ -13,56 +13,62 @@ export class SwipeController {
    * The Swipe API provides endpoints for discovering and filtering travel places in Bali.
    * All places include ratings, pricing, location coordinates, photos, and tags.
    *
+   * KEY FEATURES:
+   * - Returns ALL matching places (no pagination)
+   * - Distance calculated from user's lat/lng coordinates
+   * - Drive time estimated based on 50 km/h average speed
+   * - Results sorted by distance (nearest first)
+   *
    * Workflow:
    * 1. Call /swipe/tags to get available tags with their IDs for filtering
    * 2. Call /swipe/regencies to get available regencies (districts/cities) with their IDs
    * 3. Call /swipe/budgets to get available budget tiers
    * 4. Call /swipe/cards with filters to get places matching your criteria
    *
-   * Location & Distance:
-   * - Proximity search: /swipe/cards?lat=-8.5069&lng=115.2625&radius=5000
-   *   Returns places within 5km, sorted by distance (nearest first), with distance in meters
-   *
-   * Filter Combinations:
-   * - By category: /swipe/cards?category=tourist_attraction
-   * - By regencyId: /swipe/cards?regencyId=8 (Kota Denpasar)
-   * - By tagIds: /swipe/cards?tagIds=1,9 (returns places with ANY of these tags)
-   * - By budget: /swipe/cards?budgetId=2 (Mid-Range: 75k-200k IDR)
-   * - By location: /swipe/cards?lat=-8.5069&lng=115.2625&radius=5000
-   * - Combined: /swipe/cards?regencyId=8&tagIds=1&budgetId=2
-   * - Distance + budget: /swipe/cards?lat=-8.5069&lng=115.2625&radius=5000&budgetId=1
+   * Filter Examples:
+   * - All places: /swipe/cards?lat=-8.5069&lng=115.2625
+   * - By regency: /swipe/cards?lat=-8.5069&lng=115.2625&regencyId=4 (Bangli - returns all 2 places)
+   * - By tags: /swipe/cards?lat=-8.5069&lng=115.2625&tagIds=1,9 (places with tag 1 OR 9)
+   * - By radius: /swipe/cards?lat=-8.5069&lng=115.2625&radius=50000 (within 50km)
+   * - By budget: /swipe/cards?lat=-8.5069&lng=115.2625&budgetId=2 (Mid-Range: 75k-200k IDR)
+   * - Combined: /swipe/cards?lat=-8.5069&lng=115.2625&regencyId=2&tagIds=1 (Gianyar + tag 1)
+   * - By category: /swipe/cards?lat=-8.5069&lng=115.2625&category=tourist_attraction
    */
 
   @Get('cards')
   @ApiOperation({
-    summary: 'Get paginated place cards sorted by distance and drive time from your location',
-    description: `Returns places near your current location with distance and estimated drive time.
+    summary: 'Get all place cards sorted by distance and drive time from your location',
+    description: `Returns all matching places with distance and estimated drive time, sorted by distance from your location.
+
+No pagination - returns all results in a simple array.
 
 REQUIRED Parameters:
 - lat: Your current latitude (e.g., -8.5069)
 - lng: Your current longitude (e.g., 115.2625)
 
-OPTIONAL Query Filters:
-- page: Pagination (default: 1)
-- limit: Results per page (default: 5)
-- radius: Search radius in meters (default: 10000 = 10km)
-- category: Place type (e.g., tourist_attraction, restaurant, museum)
-- regencyId: Bali regency ID (numeric) - use /swipe/regencies to get IDs
-- tagIds: Comma-separated tag IDs (returns places with ANY tag) - use /swipe/tags to get IDs
-- budgetId: Budget tier (1=Budget/0-75k, 2=Mid-Range/75k-200k, 3=Premium/200k-500k)
+OPTIONAL Filters:
+- radius: Search radius in meters (e.g., 50000 for 50km). If not provided, no distance limit
+- regencyId: Filter by regency ID to get all places in that specific regency
+- tagIds: Filter by tag IDs (comma-separated) to get places with those tags
+- category: Filter by place category
+- budgetId: Filter by budget tier
+
+Behavior:
+- If NO filters provided: Returns ALL 128 places in database
+- If filters ARE provided: Returns only places matching the filters, sorted by distance
+- Results always include distance (in meters) and estimated drive time (in minutes)
 
 Response Includes:
 - distance: Distance in meters from your location
-- driveTimeMinutes: Estimated driving time from your location (based on 50km/h average speed)
-
-All results sorted by distance (nearest first).
+- driveTimeMinutes: Estimated driving time (based on 50km/h average speed)
+- All place details: rating, price, tags, photos, coordinates, etc.
 
 Examples:
-- /swipe/cards?lat=-8.5069&lng=115.2625 - All places within 10km, sorted by distance
+- /swipe/cards?lat=-8.5069&lng=115.2625 - All 128 places, sorted by distance
+- /swipe/cards?lat=-8.5069&lng=115.2625&regencyId=4 - All 2 places in Bangli regency
+- /swipe/cards?lat=-8.5069&lng=115.2625&regencyId=2&tagIds=1,9 - Places in Gianyar with tags 1 or 9
 - /swipe/cards?lat=-8.5069&lng=115.2625&radius=50000 - All places within 50km
-- /swipe/cards?lat=-8.5069&lng=115.2625&tagIds=9 - Nature spots within 10km
-- /swipe/cards?lat=-8.5069&lng=115.2625&budgetId=2 - Mid-range places within 10km
-- /swipe/cards?lat=-8.5069&lng=115.2625&regencyId=6&radius=50000 - Denpasar places within 50km`,
+- /swipe/cards?lat=-8.5069&lng=115.2625&budgetId=2 - All mid-range places`,
   })
   @ApiQuery({
     name: 'lat',
@@ -79,18 +85,10 @@ Examples:
     description: 'Longitude of your current location (REQUIRED). Must be provided together with lat.',
   })
   @ApiQuery({
-    name: 'page',
+    name: 'radius',
     type: Number,
     required: false,
-    example: 1,
-    description: 'Page number for pagination (1-indexed, default: 1)',
-  })
-  @ApiQuery({
-    name: 'limit',
-    type: Number,
-    required: false,
-    example: 5,
-    description: 'Number of places per page (default: 5)',
+    description: 'Search radius in meters (optional). If not provided, returns ALL places regardless of distance.',
   })
   @ApiQuery({
     name: 'category',
@@ -112,7 +110,23 @@ Examples:
     name: 'radius',
     type: Number,
     required: false,
-    description: 'Search radius in meters (default: 10000). Only used when lat and lng are provided.',
+    description: 'Search radius in meters (optional). If not provided, returns ALL places regardless of distance.',
+  })
+  @ApiQuery({
+    name: 'category',
+    required: false,
+    description: 'Filter by place category. Optional.',
+  })
+  @ApiQuery({
+    name: 'regencyId',
+    type: Number,
+    required: false,
+    description: 'Filter by regency ID (numeric). Optional. Use /swipe/regencies to get IDs.',
+  })
+  @ApiQuery({
+    name: 'tagIds',
+    required: false,
+    description: 'Filter by one or more tag IDs (comma-separated). Places matching ANY of the tags will be returned. Optional. Use /swipe/tags to get IDs.',
   })
   @ApiQuery({
     name: 'budgetId',
@@ -122,9 +136,10 @@ Examples:
   })
   @ApiResponse({
     status: 200,
-    description: 'Paginated list of place cards sorted by distance from your location',
+    description: 'Object with count and array of all matching place cards sorted by distance from your location',
     schema: {
       example: {
+        count: 2,
         data: [
           {
             id: 199,
@@ -168,12 +183,6 @@ Examples:
             driveTimeMinutes: 6,
           },
         ],
-        meta: {
-          total: 156,
-          page: 1,
-          limit: 10,
-          totalPages: 16,
-        },
       },
     },
   })
@@ -184,8 +193,6 @@ Examples:
   async getCards(
     @Query('lat') lat: string,
     @Query('lng') lng: string,
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 5,
     @Query('category') category?: string,
     @Query('regencyId') regencyId?: string,
     @Query('tagIds') tagIds?: string,
@@ -198,8 +205,6 @@ Examples:
     return await this.swipeService.getCards(
       parseFloat(lat),
       parseFloat(lng),
-      +page,
-      +limit,
       category,
       regencyId !== undefined ? parseInt(regencyId) : undefined,
       tagIds,
