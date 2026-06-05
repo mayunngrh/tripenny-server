@@ -107,6 +107,8 @@ export class PlanService {
 
     if (!plan) return null;
 
+    const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+
     return {
       id: plan.id,
       name: plan.name,
@@ -130,7 +132,9 @@ export class PlanService {
               regency: item.place.regency,
               province: item.place.province,
               description: item.place.description,
-              photoReference: item.place.photoReference,
+              photoUrl: item.place.photoReference
+                ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=${item.place.photoReference}&key=${apiKey}`
+                : null,
               latitude: parseFloat(item.place.latitude as any),
               longitude: parseFloat(item.place.longitude as any),
             }
