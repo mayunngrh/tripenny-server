@@ -45,6 +45,7 @@ export class SwipeService {
       .createQueryBuilder('place')
       .leftJoinAndSelect('place.tags', 'tags')
       .leftJoinAndSelect('place.regency', 'regency')
+      .leftJoinAndSelect('place.extraExpenses', 'extraExpenses')
       .select([
         'place.id',
         'place.name',
@@ -52,6 +53,7 @@ export class SwipeService {
         'place.totalRatings',
         'place.priceLevel',
         'place.price',
+        'place.parkingFee',
         'place.category',
         'place.address',
         'place.district',
@@ -66,6 +68,11 @@ export class SwipeService {
         'tags.iconName',
         'regency.id',
         'regency.name',
+        'extraExpenses.id',
+        'extraExpenses.name',
+        'extraExpenses.price',
+        'extraExpenses.category',
+        'extraExpenses.icon',
       ]);
 
     // Haversine formula — returns distance in meters (only if radius is provided)
@@ -133,6 +140,7 @@ export class SwipeService {
         totalRatings: p.totalRatings,
         priceLevel: p.priceLevel,
         price: p.price ?? 0,
+        parkingFee: p.parkingFee ?? 0,
         category: p.category,
         address: p.address,
         district: p.district,
@@ -140,6 +148,13 @@ export class SwipeService {
         province: p.province,
         description: p.description,
         tags: p.tags.map((t) => ({ id: t.id, name: t.name, iconName: t.iconName })),
+        extraExpenses: p.extraExpenses.map((e) => ({
+          id: e.id,
+          name: e.name,
+          price: e.price,
+          category: e.category,
+          icon: e.icon,
+        })),
         photoUrl: p.photoReference
           ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=${p.photoReference}&key=${apiKey}`
           : null,

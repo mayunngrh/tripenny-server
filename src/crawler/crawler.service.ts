@@ -5,6 +5,7 @@ import axios from 'axios';
 import { Place } from '../entities/place.entity';
 import { Tag } from '../entities/tag.entity';
 import { Regency } from '../entities/regency.entity';
+import { ExtraExpense } from '../entities/extra-expense.entity';
 
 @Injectable()
 export class CrawlerService {
@@ -43,6 +44,8 @@ export class CrawlerService {
     private tagRepository: Repository<Tag>,
     @InjectRepository(Regency)
     private regencyRepository: Repository<Regency>,
+    @InjectRepository(ExtraExpense)
+    private extraExpenseRepository: Repository<ExtraExpense>,
   ) {}
 
   private async createOrGetTags(tagNames: string[]): Promise<Tag[]> {
@@ -337,6 +340,7 @@ export class CrawlerService {
 
   async getAllPlaces() {
     const places = await this.placeRepository.find({
+      relations: { regency: true, extraExpenses: true },
       order: { rating: 'DESC' },
     });
 
@@ -348,6 +352,90 @@ export class CrawlerService {
         ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=${p.photoReference}&key=${apiKey}`
         : null,
     }));
+  }
+
+  async getRegencyStats() {
+    const regencies = await this.regencyRepository.find({
+      relations: { places: true },
+    });
+
+    const stats = regencies
+      .map((r) => ({
+        id: r.id,
+        name: r.name,
+        placeCount: r.places.length,
+      }))
+      .sort((a, b) => b.placeCount - a.placeCount);
+
+    const totalPlaces = stats.reduce((sum, r) => sum + r.placeCount, 0);
+    const topRegency = stats[0];
+
+    return {
+      total: totalPlaces,
+      regencies: stats,
+      topRegency: topRegency
+        ? {
+            id: topRegency.id,
+            name: topRegency.name,
+            placeCount: topRegency.placeCount,
+            percentage: ((topRegency.placeCount / totalPlaces) * 100).toFixed(1),
+          }
+        : null,
+    };
+  }
+
+  async seedExtraExpensesBadung() {
+    const badungRegency = await this.regencyRepository.findOne({
+      where: { name: 'Kabupaten Badung' },
+      relations: { places: true },
+    });
+
+    if (!badungRegency) {
+      return { success: false, error: 'Badung regency not found' };
+    }
+
+    const places = badungRegency.places;
+
+    const expenseTemplates = [
+      { name: 'Parking', price: 10000, category: 'parking', icon: 'car.fill' },
+      { name: 'Photo Printing', price: 25000, category: 'photo', icon: 'camera.fill' },
+      { name: 'Guide Fee', price: 75000, category: 'guide', icon: 'person.fill' },
+      { name: 'Equipment Rental', price: 50000, category: 'equipment', icon: 'gearshape.fill' },
+      { name: 'Meal Included', price: 100000, category: 'food', icon: 'fork.knife' },
+    ];
+
+    let addedCount = 0;
+
+    for (const place of places) {
+      const randomExpenses = expenseTemplates
+        .sort(() => Math.random() - 0.5)
+        .slice(0, Math.floor(Math.random() * 3) + 1);
+
+      for (const expense of randomExpenses) {
+        const existingExpense = await this.extraExpenseRepository.findOne({
+          where: { place: { id: place.id }, name: expense.name },
+        });
+
+        if (!existingExpense) {
+          await this.extraExpenseRepository.save({
+            place,
+            name: expense.name,
+            price: expense.price,
+            category: expense.category,
+            icon: expense.icon,
+          });
+          addedCount++;
+        }
+      }
+    }
+
+    return {
+      success: true,
+      regency: badungRegency.name,
+      placesUpdated: places.length,
+      expensesAdded: addedCount,
+      message: `Added ${addedCount} extra expenses to ${places.length} places in ${badungRegency.name}`,
+    };
   }
 
   async getPlacesByCategory(category: string) {

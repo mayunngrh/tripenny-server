@@ -148,6 +148,7 @@ Examples:
             totalRatings: 18191,
             priceLevel: 3,
             price: 150000,
+            parkingFee: 10000,
             category: 'tourist_attraction',
             address: 'Jl. Raya Waterbom, Badung, Bali',
             district: 'Badung',

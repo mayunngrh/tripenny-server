@@ -1,6 +1,7 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToMany, JoinTable, ManyToOne } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToMany, OneToMany, JoinTable, ManyToOne } from 'typeorm';
 import { Tag } from './tag.entity';
 import { Regency } from './regency.entity';
+import { ExtraExpense } from './extra-expense.entity';
 
 @Entity('places')
 export class Place {
@@ -27,6 +28,9 @@ export class Place {
 
   @Column({ nullable: true })
   price!: number;
+
+  @Column({ nullable: true })
+  parkingFee!: number;
 
   @Column({ nullable: true })
   isOpenNow!: boolean;
@@ -58,6 +62,9 @@ export class Place {
   @ManyToMany(() => Tag, (tag) => tag.places)
   @JoinTable()
   tags!: Tag[];
+
+  @OneToMany(() => ExtraExpense, (expense) => expense.place, { eager: true, cascade: true })
+  extraExpenses!: ExtraExpense[];
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt!: Date;

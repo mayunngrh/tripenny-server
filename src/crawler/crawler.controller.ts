@@ -49,6 +49,16 @@ export class CrawlerController {
     return await this.crawlerService.getAllPlaces();
   }
 
+  // GET /crawler/regency-stats
+  @Get('regency-stats')
+  @ApiOperation({
+    summary: 'Get statistics about places per regency',
+    description: 'Returns count of places in each regency and identifies which regency has the most places.',
+  })
+  async getRegencyStats() {
+    return await this.crawlerService.getRegencyStats();
+  }
+
   // GET /crawler/category?type=restaurant
   @Get('category')
   @ApiOperation({ summary: 'Get places filtered by category' })
@@ -110,5 +120,15 @@ export class CrawlerController {
   @ApiOperation({ summary: 'Refresh photoReference for all places from Google' })
   async updateAllPhotoReferences() {
     return await this.crawlerService.updateAllPhotoReferences();
+  }
+
+  // POST /crawler/seed-extra-expenses
+  @Post('seed-extra-expenses')
+  @ApiOperation({
+    summary: 'Seed extra expenses for places in Badung regency',
+    description: 'Adds common extra expenses (parking, photos, guides) to places in Kabupaten Badung',
+  })
+  async seedExtraExpenses() {
+    return await this.crawlerService.seedExtraExpensesBadung();
   }
 }

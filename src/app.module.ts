@@ -12,6 +12,7 @@ import { Budget } from './entities/budget.entity';
 import { Plan } from './entities/plan.entity';
 import { PlanItem } from './entities/plan-item.entity';
 import { Area } from './entities/area.entity';
+import { ExtraExpense } from './entities/extra-expense.entity';
 
 @Module({
   imports: [
@@ -22,7 +23,7 @@ import { Area } from './entities/area.entity';
     TypeOrmModule.forRoot({
       type: 'postgres',
       url: process.env.DATABASE_URL,
-      entities: [Place, Tag, Regency, Budget, Plan, PlanItem, Area],
+      entities: [Place, Tag, Regency, Budget, Plan, PlanItem, Area, ExtraExpense],
       synchronize: true,
       logging: true,
       ssl: { rejectUnauthorized: false },

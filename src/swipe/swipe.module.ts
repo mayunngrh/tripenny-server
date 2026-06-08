@@ -6,9 +6,10 @@ import { Place } from '../entities/place.entity';
 import { Tag } from '../entities/tag.entity';
 import { Regency } from '../entities/regency.entity';
 import { Budget } from '../entities/budget.entity';
+import { ExtraExpense } from '../entities/extra-expense.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Place, Tag, Regency, Budget])],
+  imports: [TypeOrmModule.forFeature([Place, Tag, Regency, Budget, ExtraExpense])],
   providers: [SwipeService],
   controllers: [SwipeController],
 })
