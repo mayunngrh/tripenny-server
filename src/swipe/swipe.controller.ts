@@ -53,19 +53,25 @@ OPTIONAL Filters:
 - category: Filter by place category
 - budgetId: Filter by budget tier
 
+Response Fields:
+- price: Main entrance or activity fee in IDR
+- parkingFee: Parking cost in IDR (0, 5000, 10000, or 15000)
+  * 0 = Free (water activities like surfing, jet ski, snorkeling)
+  * 5000 = Standard attractions (temples, waterfalls, beaches, museums)
+  * 10000 = Popular/premium attractions (high-rated parks, cultural centers)
+  * 15000 = Premium amusement parks with full facilities
+- extraExpenses: Array of optional additional costs (guide fee, equipment rental, meals, etc.)
+- distance: Distance in meters from your location
+- driveTimeMinutes: Estimated driving time (based on 50km/h average speed)
+
 Behavior:
 - If NO filters provided: Returns ALL 128 places in database
 - If filters ARE provided: Returns only places matching the filters, sorted by distance
-- Results always include distance (in meters) and estimated drive time (in minutes)
-
-Response Includes:
-- distance: Distance in meters from your location
-- driveTimeMinutes: Estimated driving time (based on 50km/h average speed)
-- All place details: rating, price, tags, photos, coordinates, etc.
+- Results always include distance and estimated drive time
 
 Examples:
 - /swipe/cards?lat=-8.5069&lng=115.2625 - All 128 places, sorted by distance
-- /swipe/cards?lat=-8.5069&lng=115.2625&regencyId=4 - All 2 places in Bangli regency
+- /swipe/cards?lat=-8.5069&lng=115.2625&regencyId=2 - All 43 places in Gianyar
 - /swipe/cards?lat=-8.5069&lng=115.2625&regencyId=2&tagIds=1,9 - Places in Gianyar with tags 1 or 9
 - /swipe/cards?lat=-8.5069&lng=115.2625&radius=50000 - All places within 50km
 - /swipe/cards?lat=-8.5069&lng=115.2625&budgetId=2 - All mid-range places`,
@@ -160,19 +166,23 @@ Examples:
             description: 'A tropical water park offering various water attractions and recreational facilities',
             tags: [
               {
-                id: 1,
-                name: 'sightseeing',
-                iconName: 'binoculars',
-              },
-              {
                 id: 2,
                 name: 'family-friendly',
                 iconName: 'person.2',
               },
               {
-                id: 8,
+                id: 12,
                 name: 'entertainment',
-                iconName: 'ticket',
+                iconName: 'theatermask',
+              },
+            ],
+            extraExpenses: [
+              {
+                id: 1,
+                name: 'Meal Included',
+                price: 100000,
+                category: 'food',
+                icon: 'fork.knife',
               },
             ],
             photoUrl: 'https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=AaRybjpP...',
