@@ -48,6 +48,12 @@ export class Place {
   photoReference!: string;
 
   @Column({ type: 'text', nullable: true })
+  cachedPhotoUrl!: string;
+
+  @Column({ type: 'timestamp', nullable: true })
+  photoUrlExpiresAt!: Date;
+
+  @Column({ type: 'text', nullable: true })
   description!: string;
 
   @Column({ nullable: true })
