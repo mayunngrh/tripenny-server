@@ -26,13 +26,13 @@ export class SwipeController {
    * 4. Call /swipe/cards with filters to get places matching your criteria
    *
    * Filter Examples:
-   * - All places: /swipe/cards?lat=-8.5069&lng=115.2625
-   * - By regency: /swipe/cards?lat=-8.5069&lng=115.2625&regencyId=4 (Bangli - returns all 2 places)
-   * - By tags: /swipe/cards?lat=-8.5069&lng=115.2625&tagIds=1,9 (places with tag 1 OR 9)
-   * - By radius: /swipe/cards?lat=-8.5069&lng=115.2625&radius=50000 (within 50km)
-   * - By budget: /swipe/cards?lat=-8.5069&lng=115.2625&budgetId=2 (Mid-Range: 75k-200k IDR)
-   * - Combined: /swipe/cards?lat=-8.5069&lng=115.2625&regencyId=2&tagIds=1 (Gianyar + tag 1)
-   * - By category: /swipe/cards?lat=-8.5069&lng=115.2625&category=tourist_attraction
+   * - All places: /swipe/cards?lat=-8.737012&lng=115.176269
+   * - By regency: /swipe/cards?lat=-8.737012&lng=115.176269&regencyId=4 (Bangli - returns all 2 places)
+   * - By tags: /swipe/cards?lat=-8.737012&lng=115.176269&tagIds=1,9 (places with tag 1 OR 9)
+   * - By radius: /swipe/cards?lat=-8.737012&lng=115.176269&radius=50000 (within 50km)
+   * - By budget: /swipe/cards?lat=-8.737012&lng=115.176269&budgetId=2 (Mid-Range: 75k-200k IDR)
+   * - Combined: /swipe/cards?lat=-8.737012&lng=115.176269&regencyId=2&tagIds=1 (Gianyar + tag 1)
+   * - By category: /swipe/cards?lat=-8.737012&lng=115.176269&category=tourist_attraction
    */
 
   @Get('cards')
@@ -43,8 +43,8 @@ export class SwipeController {
 No pagination - returns all results in a simple array.
 
 REQUIRED Parameters:
-- lat: Your current latitude (e.g., -8.5069)
-- lng: Your current longitude (e.g., 115.2625)
+- lat: Your current latitude (e.g., -8.737012)
+- lng: Your current longitude (e.g., 115.176269)
 
 OPTIONAL Filters:
 - radius: Search radius in meters (e.g., 50000 for 50km). If not provided, no distance limit
@@ -68,24 +68,24 @@ Behavior:
 - Results always include distance and estimated drive time
 
 Examples:
-- /swipe/cards?lat=-8.5069&lng=115.2625 - All 128 places, sorted by distance
-- /swipe/cards?lat=-8.5069&lng=115.2625&regencyId=2 - All 43 places in Gianyar
-- /swipe/cards?lat=-8.5069&lng=115.2625&regencyId=2&tagIds=1,9 - Places in Gianyar with tags 1 or 9
-- /swipe/cards?lat=-8.5069&lng=115.2625&radius=50000 - All places within 50km
-- /swipe/cards?lat=-8.5069&lng=115.2625&budgetId=2 - All mid-range places`,
+- /swipe/cards?lat=-8.737012&lng=115.176269 - All 128 places, sorted by distance
+- /swipe/cards?lat=-8.737012&lng=115.176269&regencyId=2 - All 43 places in Gianyar
+- /swipe/cards?lat=-8.737012&lng=115.176269&regencyId=2&tagIds=1,9 - Places in Gianyar with tags 1 or 9
+- /swipe/cards?lat=-8.737012&lng=115.176269&radius=50000 - All places within 50km
+- /swipe/cards?lat=-8.737012&lng=115.176269&budgetId=2 - All mid-range places`,
   })
   @ApiQuery({
     name: 'lat',
     type: Number,
     required: true,
-    example: -8.5069,
+    example: -8.737012,
     description: 'Latitude of your current location (REQUIRED). Must be provided together with lng.',
   })
   @ApiQuery({
     name: 'lng',
     type: Number,
     required: true,
-    example: 115.2625,
+    example: 115.176269,
     description: 'Longitude of your current location (REQUIRED). Must be provided together with lat.',
   })
   @ApiQuery({
