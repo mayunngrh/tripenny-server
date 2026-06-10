@@ -16,8 +16,30 @@ export class PlanService {
     private placeRepository: Repository<Place>,
   ) {}
 
-  private mapPlace(place: Place): any {
+  private calculateDriveTime(distanceMeters: number): number {
+    const distanceKm = distanceMeters / 1000;
+    return Math.max(Math.ceil((distanceKm / 30) * 60), 1);
+  }
+
+  private calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+    const R = 6371000;
+    const toRad = (deg: number) => (deg * Math.PI) / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLng = toRad(lng2 - lng1);
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+
+  private mapPlace(place: Place, userLat?: number, userLng?: number): any {
     const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+    const placeLat = parseFloat(place.latitude as any);
+    const placeLng = parseFloat(place.longitude as any);
+
+    const distanceMeters =
+      userLat != null && userLng != null
+        ? Math.round(this.calculateDistance(userLat, userLng, placeLat, placeLng))
+        : null;
+
     return {
       id: place.id,
       name: place.name,
@@ -44,12 +66,16 @@ export class PlanService {
       photoUrl: place.photoReference
         ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=${place.photoReference}&key=${apiKey}`
         : null,
-      latitude: parseFloat(place.latitude as any),
-      longitude: parseFloat(place.longitude as any),
+      latitude: placeLat,
+      longitude: placeLng,
+      ...(distanceMeters != null && {
+        distance: distanceMeters,
+        driveTimeMinutes: this.calculateDriveTime(distanceMeters),
+      }),
     };
   }
 
-  private mapPlan(plan: Plan): any {
+  private mapPlan(plan: Plan, userLat?: number, userLng?: number): any {
     return {
       id: plan.id,
       name: plan.name,
@@ -59,7 +85,7 @@ export class PlanService {
       placesCount: plan.items?.length || 0,
       items: plan.items.map((item) => ({
         id: item.id,
-        place: item.place ? this.mapPlace(item.place) : null,
+        place: item.place ? this.mapPlace(item.place, userLat, userLng) : null,
       })),
       createdAt: plan.createdAt,
     };
@@ -100,10 +126,10 @@ export class PlanService {
     return this.mapPlan((await this.loadPlan(plan.id))!);
   }
 
-  async getPlanById(planId: number): Promise<any> {
+  async getPlanById(planId: number, userLat?: number, userLng?: number): Promise<any> {
     const plan = await this.loadPlan(planId);
     if (!plan) return null;
-    return this.mapPlan(plan);
+    return this.mapPlan(plan, userLat, userLng);
   }
 
   async getAllPlans(): Promise<any[]> {

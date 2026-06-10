@@ -1,5 +1,5 @@
-import { Controller, Post, Get, Put, Delete, Body, Param, ParseIntPipe, NotFoundException } from '@nestjs/common';
-import { ApiOperation, ApiBody, ApiResponse, ApiParam, ApiTags } from '@nestjs/swagger';
+import { Controller, Post, Get, Put, Delete, Body, Param, Query, ParseIntPipe, ParseFloatPipe, NotFoundException, BadRequestException } from '@nestjs/common';
+import { ApiOperation, ApiBody, ApiResponse, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { PlanService } from './plan.service';
 
 @ApiTags('plans')
@@ -137,8 +137,13 @@ Request Body:
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get plan details by ID' })
+  @ApiOperation({
+    summary: 'Get plan details by ID',
+    description: 'Returns plan with full place details. Optionally provide lat/lng to include distance and driveTimeMinutes for each place.',
+  })
   @ApiParam({ name: 'id', type: Number, example: 1 })
+  @ApiQuery({ name: 'lat', required: true, type: Number, description: 'Your current latitude', example: -8.737012 })
+  @ApiQuery({ name: 'lng', required: true, type: Number, description: 'Your current longitude', example: 115.176269 })
   @ApiResponse({
     status: 200,
     description: 'Plan with full place details',
@@ -170,6 +175,8 @@ Request Body:
               photoUrl: 'https://maps.googleapis.com/maps/api/place/photo?...',
               latitude: -8.5016049,
               longitude: 115.2647892,
+              distance: 27000,
+              driveTimeMinutes: 54,
             },
           },
         ],
@@ -178,8 +185,13 @@ Request Body:
     },
   })
   @ApiResponse({ status: 404, description: 'Plan not found' })
-  async getPlanById(@Param('id', ParseIntPipe) id: number) {
-    const plan = await this.planService.getPlanById(id);
+  async getPlanById(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('lat') lat: string,
+    @Query('lng') lng: string,
+  ) {
+    if (lat == null || lng == null) throw new BadRequestException('lat and lng are required');
+    const plan = await this.planService.getPlanById(id, parseFloat(lat), parseFloat(lng));
     if (!plan) throw new NotFoundException(`Plan with id ${id} not found`);
     return plan;
   }
