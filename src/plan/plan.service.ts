@@ -16,6 +16,72 @@ export class PlanService {
     private placeRepository: Repository<Place>,
   ) {}
 
+  private mapPlace(place: Place): any {
+    const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+    return {
+      id: place.id,
+      name: place.name,
+      rating: parseFloat(place.rating as any),
+      totalRatings: place.totalRatings,
+      priceLevel: place.priceLevel ?? 0,
+      price: place.price ?? 0,
+      bikeParkingFee: place.bikeParkingFee ?? 0,
+      carParkingFee: place.carParkingFee ?? 0,
+      category: place.category,
+      address: place.address,
+      district: place.district,
+      regency: place.regency,
+      province: place.province,
+      description: place.description,
+      tags: place.tags,
+      extraExpenses: place.extraExpenses.map((e) => ({
+        id: e.id,
+        name: e.name,
+        price: e.price,
+        category: e.category,
+        icon: e.icon,
+      })),
+      photoUrl: place.photoReference
+        ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=${place.photoReference}&key=${apiKey}`
+        : null,
+      latitude: parseFloat(place.latitude as any),
+      longitude: parseFloat(place.longitude as any),
+    };
+  }
+
+  private mapPlan(plan: Plan): any {
+    return {
+      id: plan.id,
+      name: plan.name,
+      startDate: plan.startDate,
+      endDate: plan.endDate,
+      estimatedCost: plan.estimatedCost,
+      placesCount: plan.items?.length || 0,
+      items: plan.items.map((item) => ({
+        id: item.id,
+        place: item.place ? this.mapPlace(item.place) : null,
+      })),
+      createdAt: plan.createdAt,
+    };
+  }
+
+  private async loadPlan(planId: number): Promise<Plan | null> {
+    return this.planRepository.findOne({
+      where: { id: planId },
+      relations: { items: { place: { extraExpenses: true, tags: true, regency: true } } },
+    });
+  }
+
+  private async replacePlaces(plan: Plan, placeIds: number[]): Promise<void> {
+    await this.planItemRepository.delete({ plan: { id: plan.id } });
+    for (const placeId of placeIds) {
+      const place = await this.placeRepository.findOne({ where: { id: placeId } });
+      if (place) {
+        await this.planItemRepository.save({ plan, place, dayIndex: 1 });
+      }
+    }
+  }
+
   async createPlan(
     name: string,
     startDate: Date,
@@ -23,134 +89,29 @@ export class PlanService {
     estimatedCost?: number,
     placeIds?: number[],
   ): Promise<any> {
-    const plan = this.planRepository.create({
-      name,
-      startDate,
-      endDate,
-      estimatedCost,
-    });
-    const savedPlan = await this.planRepository.save(plan);
+    const plan = await this.planRepository.save(
+      this.planRepository.create({ name, startDate, endDate, estimatedCost }),
+    );
 
-    // Add places to the plan if placeIds provided
     if (placeIds && placeIds.length > 0) {
-      for (const placeId of placeIds) {
-        const place = await this.placeRepository.findOne({ where: { id: placeId } });
-        if (place) {
-          await this.planItemRepository.save({
-            plan: savedPlan,
-            place,
-            dayIndex: 1,
-            visitTime: null,
-            notes: undefined,
-          });
-        }
-      }
+      await this.replacePlaces(plan, placeIds);
     }
 
-    const planWithItems = await this.planRepository.findOne({
-      where: { id: savedPlan.id },
-      relations: { items: { place: true } },
-    });
-
-    return {
-      id: planWithItems!.id,
-      name: planWithItems!.name,
-      startDate: planWithItems!.startDate,
-      endDate: planWithItems!.endDate,
-      estimatedCost: planWithItems!.estimatedCost,
-      items: planWithItems!.items.map((item) => ({
-        id: item.id,
-        dayIndex: item.dayIndex,
-        visitTime: item.visitTime,
-        notes: item.notes,
-        place: item.place
-          ? {
-              id: item.place.id,
-              name: item.place.name,
-              rating: parseFloat(item.place.rating as any),
-              price: item.place.price ?? 0,
-              category: item.place.category,
-            }
-          : null,
-      })),
-      createdAt: planWithItems!.createdAt,
-    };
-  }
-
-  async addItemToPlan(
-    planId: number,
-    placeId: number,
-    dayIndex: number,
-    visitTime?: string,
-    notes?: string,
-  ): Promise<PlanItem> {
-    const place = await this.placeRepository.findOne({ where: { id: placeId } });
-    const plan = await this.planRepository.findOne({ where: { id: planId } });
-
-    const item = this.planItemRepository.create({
-      plan: plan!,
-      place: place || null,
-      dayIndex,
-      visitTime: visitTime || null,
-      notes: notes || undefined,
-    });
-    return await this.planItemRepository.save(item);
+    return this.mapPlan((await this.loadPlan(plan.id))!);
   }
 
   async getPlanById(planId: number): Promise<any> {
-    const plan = await this.planRepository.findOne({
-      where: { id: planId },
-      relations: {
-        items: { place: true },
-      },
-    });
-
+    const plan = await this.loadPlan(planId);
     if (!plan) return null;
-
-    const apiKey = process.env.GOOGLE_MAPS_API_KEY;
-
-    return {
-      id: plan.id,
-      name: plan.name,
-      startDate: plan.startDate,
-      endDate: plan.endDate,
-      estimatedCost: plan.estimatedCost,
-      activitiesCount: plan.items?.length || 0,
-      items: plan.items.map((item) => ({
-        id: item.id,
-        place: item.place
-          ? {
-              id: item.place.id,
-              name: item.place.name,
-              rating: parseFloat(item.place.rating as any),
-              totalRatings: item.place.totalRatings,
-              priceLevel: item.place.priceLevel ?? 0,
-              price: item.place.price ?? 0,
-              category: item.place.category,
-              address: item.place.address,
-              district: item.place.district,
-              regency: item.place.regency,
-              province: item.place.province,
-              description: item.place.description,
-              photoReference: item.place.photoReference
-                ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=${item.place.photoReference}&key=${apiKey}`
-                : null,
-              latitude: parseFloat(item.place.latitude as any),
-              longitude: parseFloat(item.place.longitude as any),
-            }
-          : null,
-      })),
-      createdAt: plan.createdAt,
-    };
+    return this.mapPlan(plan);
   }
 
-  async getAllPlans(): Promise<Plan[]> {
-    return await this.planRepository.find({
-      relations: {
-        items: { place: true },
-      },
+  async getAllPlans(): Promise<any[]> {
+    const plans = await this.planRepository.find({
+      relations: { items: { place: { extraExpenses: true, tags: true, regency: true } } },
       order: { createdAt: 'DESC' },
     });
+    return plans.map((plan) => this.mapPlan(plan));
   }
 
   async updatePlan(
@@ -159,25 +120,29 @@ export class PlanService {
     startDate?: Date,
     endDate?: Date,
     estimatedCost?: number,
-  ): Promise<Plan | null> {
-    const plan = await this.planRepository.findOne({ where: { id: planId } });
+    placeIds?: number[],
+  ): Promise<any | null> {
+    const plan = await this.planRepository.findOne({
+      where: { id: planId },
+      relations: { items: true },
+    });
     if (!plan) return null;
 
     if (name) plan.name = name;
     if (startDate) plan.startDate = startDate;
     if (endDate) plan.endDate = endDate;
-    if (estimatedCost) plan.estimatedCost = estimatedCost;
+    if (estimatedCost !== undefined) plan.estimatedCost = estimatedCost;
+    await this.planRepository.save(plan);
 
-    return await this.planRepository.save(plan);
+    if (placeIds !== undefined) {
+      await this.replacePlaces(plan, placeIds);
+    }
+
+    return this.mapPlan((await this.loadPlan(planId))!);
   }
 
   async deletePlan(planId: number): Promise<boolean> {
     const result = await this.planRepository.delete(planId);
-    return result.affected ? result.affected > 0 : false;
-  }
-
-  async removeItemFromPlan(itemId: number): Promise<boolean> {
-    const result = await this.planItemRepository.delete(itemId);
     return result.affected ? result.affected > 0 : false;
   }
 
@@ -208,7 +173,7 @@ export class PlanService {
         startDate: plan.startDate,
         endDate: plan.endDate,
         estimatedCost: plan.estimatedCost,
-        itemCount: plan.items?.length || 0,
+        placesCount: plan.items?.length || 0,
         thumbnailUrl,
         createdAt: plan.createdAt,
       };
@@ -242,7 +207,7 @@ export class PlanService {
         startDate: plan.startDate,
         endDate: plan.endDate,
         estimatedCost: plan.estimatedCost,
-        itemCount: plan.items?.length || 0,
+        placesCount: plan.items?.length || 0,
         thumbnailUrl,
         createdAt: plan.createdAt,
       };
