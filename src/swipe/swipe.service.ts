@@ -20,9 +20,9 @@ export class SwipeService {
   ) {}
 
   private calculateDriveTime(distanceMeters: number): number {
-    const averageSpeedKmh = 50;
+    const averageSpeedKmh = 30;
     const distanceKm = distanceMeters / 1000;
-    const driveTimeMinutes = Math.round((distanceKm / averageSpeedKmh) * 60);
+    const driveTimeMinutes = Math.ceil((distanceKm / averageSpeedKmh) * 60);
     return Math.max(driveTimeMinutes, 1);
   }
 
@@ -169,9 +169,17 @@ export class SwipeService {
       };
     });
 
+    const bands = [
+      places.filter((p) => p.distance <= 5000),
+      places.filter((p) => p.distance > 5000 && p.distance <= 15000),
+      places.filter((p) => p.distance > 15000),
+    ];
+    const shuffle = <T>(arr: T[]): T[] => arr.sort(() => Math.random() - 0.5);
+    const shuffled = bands.flatMap((band) => shuffle(band));
+
     return {
-      data: places,
-      count: places.length,
+      data: shuffled,
+      count: shuffled.length,
     };
   }
 
