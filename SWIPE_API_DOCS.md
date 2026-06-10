@@ -43,7 +43,8 @@ Returns all matching place cards sorted by distance from your location.
       "totalRatings": 166,
       "priceLevel": 3,
       "price": 350000,
-      "parkingFee": 10000,
+      "bikeParkingFee": 5000,
+      "carParkingFee": 10000,
       "category": "zoo",
       "address": "Jalan Brahmana, Sangeh",
       "district": null,
@@ -82,8 +83,11 @@ Returns all matching place cards sorted by distance from your location.
 
 **Pricing:**
 - `price`: Main entrance or activity fee in Indonesian Rupiah (IDR)
-- `parkingFee`: Parking cost in IDR with the following tiers:
-  - **0** = Free parking (water activities: surfing, jet ski, snorkeling, diving)
+- `bikeParkingFee`: Motorcycle/bike parking cost in IDR
+  - **2,000** = Standard attractions
+  - **5,000** = Popular/premium attractions
+  - **7,000** = Premium amusement parks
+- `carParkingFee`: Car parking cost in IDR
   - **5,000** = Standard attractions (temples, waterfalls, beaches, museums)
   - **10,000** = Popular/premium attractions (high-rated parks, cultural centers, amusement parks)
   - **15,000** = Premium amusement parks with full facilities
@@ -299,30 +303,39 @@ Returns available budget tiers for filtering places by price range.
 To calculate the total cost for a visitor at a place:
 
 ```
-Total Cost = price + parkingFee + sum(extraExpenses[].price)
+For Motorcycle/Bike:
+Total Cost = price + bikeParkingFee + sum(extraExpenses[].price)
+
+For Car:
+Total Cost = price + carParkingFee + sum(extraExpenses[].price)
 ```
 
 ### Example: Ubud Bali White Water Rafting (Regency 2)
 ```
 price: 0 IDR
-parkingFee: 5,000 IDR (water activity)
+bikeParkingFee: 2,000 IDR / carParkingFee: 5,000 IDR
 extraExpenses: Equipment Rental (75,000 IDR)
-Total: 80,000 IDR
+
+By motorcycle: 0 + 2,000 + 75,000 = 77,000 IDR
+By car: 0 + 5,000 + 75,000 = 80,000 IDR
 ```
 
 ### Example: Waterbom Bali (Regency 1)
 ```
 price: 350,000 IDR
-parkingFee: 10,000 IDR (popular attraction)
+bikeParkingFee: 5,000 IDR / carParkingFee: 10,000 IDR
 extraExpenses: Meal Included (100,000 IDR)
-Total: 460,000 IDR
+
+By motorcycle: 350,000 + 5,000 + 100,000 = 455,000 IDR
+By car: 350,000 + 10,000 + 100,000 = 460,000 IDR
 ```
 
 ---
 
 ## Data Quality Notes
 
-- **parkingFee** is now a dedicated field (not duplicated in extraExpenses)
+- **bikeParkingFee** and **carParkingFee** are separate fields following Indonesian pricing ratios
+- Bike parking is approximately 40% of car parking cost
 - **extraExpenses** only includes meaningful, optional costs for each place type
 - **Price range** varies by regency and place type
 - **No duplication**: Parking is never listed in extraExpenses
@@ -365,7 +378,13 @@ No rate limiting is currently implemented. Please use responsibly.
 
 ## Changelog
 
-### v1.1.0 - Latest
+### v1.2.0 - Latest
+- Split `parkingFee` into `bikeParkingFee` and `carParkingFee`
+- Implemented Indonesian parking fee ratios (bike ≈ 40% of car)
+- All 128 places now have separate bike and car parking fees
+- Updated all examples and documentation
+
+### v1.1.0
 - Added `parkingFee` field at root level (same level as `price`)
 - Removed duplicate parking charges from `extraExpenses`
 - Added realistic extra expenses for all place types

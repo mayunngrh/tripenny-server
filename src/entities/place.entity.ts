@@ -30,7 +30,10 @@ export class Place {
   price!: number;
 
   @Column({ nullable: true })
-  parkingFee!: number;
+  bikeParkingFee!: number;
+
+  @Column({ nullable: true })
+  carParkingFee!: number;
 
   @Column({ nullable: true })
   isOpenNow!: boolean;

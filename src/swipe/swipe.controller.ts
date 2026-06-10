@@ -55,11 +55,9 @@ OPTIONAL Filters:
 
 Response Fields:
 - price: Main entrance or activity fee in IDR
-- parkingFee: Parking cost in IDR (0, 5000, 10000, or 15000)
-  * 0 = Free (water activities like surfing, jet ski, snorkeling)
-  * 5000 = Standard attractions (temples, waterfalls, beaches, museums)
-  * 10000 = Popular/premium attractions (high-rated parks, cultural centers)
-  * 15000 = Premium amusement parks with full facilities
+- bikeParkingFee: Motorcycle/bike parking cost in IDR (2000, 5000, or 7000)
+- carParkingFee: Car parking cost in IDR (5000, 10000, or 15000)
+  * Based on Indonesian parking fee ratios: bike ≈ 40% of car fee
 - extraExpenses: Array of optional additional costs (guide fee, equipment rental, meals, etc.)
 - distance: Distance in meters from your location
 - driveTimeMinutes: Estimated driving time (based on 50km/h average speed)
@@ -154,7 +152,8 @@ Examples:
             totalRatings: 18191,
             priceLevel: 3,
             price: 150000,
-            parkingFee: 10000,
+            bikeParkingFee: 5000,
+            carParkingFee: 10000,
             category: 'tourist_attraction',
             address: 'Jl. Raya Waterbom, Badung, Bali',
             district: 'Badung',
@@ -173,7 +172,7 @@ Examples:
               {
                 id: 12,
                 name: 'entertainment',
-                iconName: 'theatermask',
+                iconName: 'star.fill',
               },
             ],
             extraExpenses: [
