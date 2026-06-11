@@ -26,7 +26,7 @@ export class PlanService {
     plan.items?.forEach((item) => {
       if (item.place) {
         totalCost += item.place.price ?? 0;
-        totalCost += item.place.carParkingFee ?? 0;
+        totalCost += (item.place.bikeParkingFee ?? 0) + (item.place.carParkingFee ?? 0);
         totalCost += item.place.extraExpenses?.reduce((sum, e) => sum + (e.price ?? 0), 0) ?? 0;
       }
     });
@@ -54,6 +54,7 @@ export class PlanService {
 
     const estimatedCost =
       (place.price ?? 0) +
+      (place.bikeParkingFee ?? 0) +
       (place.carParkingFee ?? 0) +
       (place.extraExpenses?.reduce((sum, e) => sum + (e.price ?? 0), 0) ?? 0);
 
