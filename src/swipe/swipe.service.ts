@@ -143,12 +143,12 @@ export class SwipeService {
         price: p.price ?? 0,
         bikeParkingFee: p.bikeParkingFee ?? 0,
         carParkingFee: p.carParkingFee ?? 0,
-        category: p.category,
+        category: p.category ?? '',
         address: p.address ?? '',
-        district: p.district,
+        district: p.district ?? '',
         regency: p.regency ? { id: p.regency.id, name: p.regency.name } : null,
-        province: p.province,
-        description: p.description,
+        province: p.province ?? '',
+        description: p.description ?? '',
         tags: p.tags.map((t) => ({ id: t.id, name: t.name, iconName: t.iconName })),
         extraExpenses: p.extraExpenses.map((e) => ({
           id: e.id,
@@ -209,7 +209,7 @@ export class SwipeService {
       .orderBy('tag.name', 'ASC')
       .getMany();
 
-    return { regency: { id: regency.id, name: regency.name }, tags };
+    return tags;
   }
 
   async getBudgets() {
