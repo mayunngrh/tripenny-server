@@ -21,6 +21,18 @@ export class PlanService {
     return Math.max(Math.ceil((distanceKm / 30) * 60), 1);
   }
 
+  private calculatePlanCost(plan: Plan): number {
+    let totalCost = 0;
+    plan.items?.forEach((item) => {
+      if (item.place) {
+        totalCost += item.place.price ?? 0;
+        totalCost += item.place.carParkingFee ?? 0;
+        totalCost += item.place.extraExpenses?.reduce((sum, e) => sum + (e.price ?? 0), 0) ?? 0;
+      }
+    });
+    return totalCost;
+  }
+
   private calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
     const R = 6371000;
     const toRad = (deg: number) => (deg * Math.PI) / 180;
@@ -180,6 +192,7 @@ export class PlanService {
       .createQueryBuilder('plan')
       .leftJoinAndSelect('plan.items', 'items')
       .leftJoinAndSelect('items.place', 'place')
+      .leftJoinAndSelect('place.extraExpenses', 'extraExpenses')
       .where('plan.endDate >= :today', { today })
       .orderBy('plan.startDate', 'ASC')
       .addOrderBy('plan.createdAt', 'DESC')
@@ -198,7 +211,7 @@ export class PlanService {
         name: plan.name,
         startDate: plan.startDate,
         endDate: plan.endDate,
-        estimatedCost: plan.estimatedCost ?? 0,
+        estimatedCost: this.calculatePlanCost(plan),
         placesCount: plan.items?.length || 0,
         thumbnailUrl,
         createdAt: plan.createdAt,
@@ -214,6 +227,7 @@ export class PlanService {
       .createQueryBuilder('plan')
       .leftJoinAndSelect('plan.items', 'items')
       .leftJoinAndSelect('items.place', 'place')
+      .leftJoinAndSelect('place.extraExpenses', 'extraExpenses')
       .where('plan.endDate < :today', { today })
       .orderBy('plan.endDate', 'DESC')
       .addOrderBy('plan.createdAt', 'DESC')
@@ -232,7 +246,7 @@ export class PlanService {
         name: plan.name,
         startDate: plan.startDate,
         endDate: plan.endDate,
-        estimatedCost: plan.estimatedCost ?? 0,
+        estimatedCost: this.calculatePlanCost(plan),
         placesCount: plan.items?.length || 0,
         thumbnailUrl,
         createdAt: plan.createdAt,
