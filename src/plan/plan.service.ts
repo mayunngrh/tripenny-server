@@ -52,6 +52,11 @@ export class PlanService {
         ? Math.round(this.calculateDistance(userLat, userLng, placeLat, placeLng))
         : null;
 
+    const estimatedCost =
+      (place.price ?? 0) +
+      (place.carParkingFee ?? 0) +
+      (place.extraExpenses?.reduce((sum, e) => sum + (e.price ?? 0), 0) ?? 0);
+
     return {
       id: place.id,
       name: place.name,
@@ -75,6 +80,7 @@ export class PlanService {
         category: e.category,
         icon: e.icon,
       })),
+      estimatedCost,
       photoUrl: place.photoReference
         ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=${place.photoReference}&key=${apiKey}`
         : null,
