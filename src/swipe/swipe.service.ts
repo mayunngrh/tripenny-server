@@ -144,7 +144,7 @@ export class SwipeService {
         bikeParkingFee: p.bikeParkingFee ?? 0,
         carParkingFee: p.carParkingFee ?? 0,
         category: p.category,
-        address: p.address,
+        address: p.address ?? '',
         district: p.district,
         regency: p.regency ? { id: p.regency.id, name: p.regency.name } : null,
         province: p.province,

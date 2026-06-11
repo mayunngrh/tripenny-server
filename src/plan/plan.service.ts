@@ -50,7 +50,7 @@ export class PlanService {
       bikeParkingFee: place.bikeParkingFee ?? 0,
       carParkingFee: place.carParkingFee ?? 0,
       category: place.category,
-      address: place.address,
+      address: place.address ?? '',
       district: place.district,
       regency: place.regency,
       province: place.province,
