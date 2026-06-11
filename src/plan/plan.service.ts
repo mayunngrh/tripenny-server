@@ -94,17 +94,21 @@ export class PlanService {
   }
 
   private mapPlan(plan: Plan, userLat?: number, userLng?: number): any {
+    const items = plan.items.map((item) => ({
+      id: item.id,
+      place: item.place ? this.mapPlace(item.place, userLat, userLng) : null,
+    }));
+
+    const estimatedCost = items.reduce((sum, item) => sum + (item.place?.estimatedCost ?? 0), 0);
+
     return {
       id: plan.id,
       name: plan.name,
       startDate: plan.startDate,
       endDate: plan.endDate,
-      estimatedCost: plan.estimatedCost,
-      placesCount: plan.items?.length || 0,
-      items: plan.items.map((item) => ({
-        id: item.id,
-        place: item.place ? this.mapPlace(item.place, userLat, userLng) : null,
-      })),
+      estimatedCost,
+      placesCount: items.length,
+      items,
       createdAt: plan.createdAt,
     };
   }
@@ -113,6 +117,7 @@ export class PlanService {
     return this.planRepository.findOne({
       where: { id: planId },
       relations: { items: { place: { extraExpenses: true, tags: true, regency: true } } },
+      relationLoadStrategy: 'query',
     });
   }
 
